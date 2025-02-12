@@ -55,6 +55,9 @@ public abstract class Files.FileBase : Object {
     public FileInfo info { protected get; construct; }
     public Cancellable cancellable { protected get; construct; }
 
+    private uint loaded = 0;
+    private uint unload_timeout_id = 0;
+
     protected FileBase () {}
 
     construct {
@@ -71,9 +74,38 @@ public abstract class Files.FileBase : Object {
         known_files.remove (path);
     }
 
-    public virtual void load () { }
+    public void load () {
+        if (unload_timeout_id != 0) {
+            Source.remove (unload_timeout_id);
+            unload_timeout_id = 0;
+        } else if (loaded == 0) {
+            load_internal.begin ();
+        }
 
-    public virtual void queue_unload () { }
+        loaded++;
+    }
+
+    public void queue_unload () {
+        if (loaded == 0 || unload_timeout_id != 0) {
+            critical ("Unload called on unloaded file %s so to often", path);
+            return;
+        }
+
+        loaded--;
+
+        if (loaded == 0) {
+            unload_timeout_id = Timeout.add_seconds (5, unload_timeout_func);
+        }
+    }
+
+    private bool unload_timeout_func () {
+        unload_internal.begin ();
+        unload_timeout_id = 0;
+        return Source.REMOVE;
+    }
+
+    protected virtual async void load_internal () { }
+    protected virtual async void unload_internal () { }
 
     public virtual Directory? open (Gtk.Window? parent) {
         return null;

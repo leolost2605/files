@@ -9,7 +9,6 @@ public class Files.MainView : Granite.Bin {
         get { return _directory; }
         set {
             if (_directory != null) {
-                _directory.disable_unload = false;
                 _directory.queue_unload ();
             }
 
@@ -17,7 +16,7 @@ public class Files.MainView : Granite.Bin {
 
             if (value != null) {
                 selection_model.model = value.children;
-                value.disable_unload = true;
+                value.load ();
             }
         }
     }

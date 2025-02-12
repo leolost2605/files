@@ -6,25 +6,7 @@
 public class Files.Directory : FileBase {
     public FileModel children { get; construct; }
 
-    private bool _disable_unload = false; // E.g. while it's visible
-    public bool disable_unload {
-        get { return _disable_unload; }
-        set {
-            _disable_unload = value;
-            if (value) {
-                load ();
-
-                if (unload_timeout_id != 0) {
-                    GLib.Source.remove (unload_timeout_id);
-                    unload_timeout_id = 0;
-                }
-            }
-        }
-    }
-
     private FileMonitor? monitor;
-
-    private uint unload_timeout_id = 0;
 
     public Directory (File file, FileInfo info) {
         Object (file: file, info: info);
@@ -34,16 +16,7 @@ public class Files.Directory : FileBase {
         children = new FileModel ();
     }
 
-    public override void load () {
-        load_internal.begin ();
-    }
-
-    private async void load_internal () {
-        if (unload_timeout_id != 0) {
-            GLib.Source.remove (unload_timeout_id);
-            unload_timeout_id = 0;
-        }
-
+    protected override async void load_internal () {
         cancellable.reset ();
 
         try {
@@ -90,23 +63,11 @@ public class Files.Directory : FileBase {
         }
     }
 
-    public override void queue_unload () {
-        if (unload_timeout_id != 0 || disable_unload) {
-            return;
-        }
-
-        unload_timeout_id = Timeout.add_seconds (5, unload);
-    }
-
-    private bool unload () {
-        unload_timeout_id = 0;
-
+    protected override async void unload_internal () {
         monitor.cancel ();
         monitor = null;
         cancellable.cancel ();
         children.remove_all ();
-
-        return Source.REMOVE;
     }
 
     public override Directory? open (Gtk.Window? parent) {
