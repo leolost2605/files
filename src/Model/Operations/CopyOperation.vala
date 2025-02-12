@@ -33,6 +33,8 @@ public class Files.CopyOperation : ConflictableOperation {
                 report_error ("Failed to copy file %s to %s: %s".printf (path, destination.get_path (), e.message));
             }
         }
+
+        done ();
     }
 
     private async void copy_recursive (File source, FileInfo source_info, File destination) throws Error {

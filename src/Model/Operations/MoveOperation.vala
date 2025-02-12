@@ -26,5 +26,7 @@ public class Files.MoveOperation : ConflictableOperation {
                 report_error ("Failed to move file %s to %s: %s".printf (source.get_path (), destination.get_path (), e.message));
             }
         }
+
+        done ();
     }
 }
