@@ -30,6 +30,8 @@ public class Files.ListView : Granite.Bin {
         };
 
         child = scrolled_window;
+        hexpand = true;
+        vexpand = true;
 
         list_view.activate.connect (on_activate);
     }

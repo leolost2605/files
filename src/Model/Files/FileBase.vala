@@ -51,7 +51,9 @@ public abstract class Files.FileBase : Object {
     public string path { get; construct; }
     public string basename { get; private set; }
 
-    public File file { protected get; construct; }
+    public bool move_queued { get; set; default = false; }
+
+    public File file { get; construct; }
     public FileInfo info { protected get; construct; }
     public Cancellable cancellable { protected get; construct; }
 
