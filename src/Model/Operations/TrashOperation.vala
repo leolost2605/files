@@ -14,7 +14,7 @@ public class Files.TrashOperation : Operation {
         trash.begin ();
     }
 
-    private void trash () {
+    private async void trash () {
         foreach (var path in source_paths) {
             var source = File.new_for_path (path);
 

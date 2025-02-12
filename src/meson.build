@@ -1,5 +1,6 @@
 sources = [
     'Application.vala',
+    'UI' / 'ActionHandler.vala',
     'UI' / 'MainView.vala',
     'UI' / 'MainWindow.vala',
     'UI' / 'ListView' / 'FileRow.vala',
@@ -13,6 +14,7 @@ sources = [
     'Model' / 'Operations' / 'MoveOperation.vala',
     'Model' / 'Operations' / 'Operation.vala',
     'Model' / 'Operations' / 'OperationManager.vala',
+    'Model' / 'Operations' / 'TrashOperation.vala',
 ]
 
 # Create a new executable, list the files we want to compile, and install
