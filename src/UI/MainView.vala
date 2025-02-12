@@ -10,7 +10,6 @@ public class Files.MainView : Granite.Bin {
         set {
             if (_directory != null) {
                 _directory.queue_unload ();
-                action_handler.directory = null;
             }
 
             _directory = value;
@@ -18,13 +17,11 @@ public class Files.MainView : Granite.Bin {
             if (value != null) {
                 selection_model.model = value.children;
                 value.load ();
-                action_handler.directory = value;
             }
         }
     }
 
     private Gtk.MultiSelection selection_model;
-    private ActionHandler action_handler;
 
     construct {
         hexpand = true;
@@ -32,21 +29,18 @@ public class Files.MainView : Granite.Bin {
 
         selection_model = new Gtk.MultiSelection (null);
 
-        action_handler = new ActionHandler (selection_model, this);
-        insert_action_group (ActionHandler.ACTION_GROUP_PREFIX, action_handler.action_group);
-
         var list_view = new ListView (selection_model);
 
         var copy_button = new Gtk.Button.with_label ("Copy") {
-            action_name = ActionHandler.ACTION_PREFIX + ActionHandler.ACTION_COPY,
+            action_name = MainWindow.ACTION_PREFIX + MainWindow.ACTION_COPY,
         };
 
         var move_button = new Gtk.Button.with_label ("Move") {
-            action_name = ActionHandler.ACTION_PREFIX + ActionHandler.ACTION_CUT,
+            action_name = MainWindow.ACTION_PREFIX + MainWindow.ACTION_CUT,
         };
 
         var paste_button = new Gtk.Button.with_label ("Paste") {
-            action_name = ActionHandler.ACTION_PREFIX + ActionHandler.ACTION_PASTE,
+            action_name = MainWindow.ACTION_PREFIX + MainWindow.ACTION_PASTE,
         };
 
         var main_box = new Gtk.Box (VERTICAL, 6);
@@ -73,5 +67,60 @@ public class Files.MainView : Granite.Bin {
     private async void load () {
         var home_dir = (Directory) yield FileBase.get_for_path (Environment.get_home_dir ());
         directory = home_dir;
+    }
+
+    public void copy (bool move) {
+        var selection = selection_model.get_selection ();
+
+        File[] files = new File[selection.get_size ()];
+        for (int i = 0; i < selection.get_size (); i++) {
+            var base_file = (FileBase) selection_model.get_item (selection.get_nth (i));
+            files[i] = base_file.file;
+            base_file.move_queued = move;
+        }
+
+        var file_list = new Gdk.FileList.from_array (files);
+        var content_provider = new Gdk.ContentProvider.for_value (file_list);
+
+        parent.root.get_surface ().display.get_clipboard ().set_content (content_provider);
+    }
+
+    public async void paste () {
+        var clipboard = parent.root.get_surface ().display.get_clipboard ();
+
+        Gdk.FileList file_list;
+        try {
+            var val = yield clipboard.read_value_async (typeof (Gdk.FileList), Priority.DEFAULT, null);
+
+            if (val == null) {
+                return;
+            }
+
+            file_list = (Gdk.FileList) val.get_boxed ();
+        } catch (Error e) {
+            warning ("Failed to read clipboard: %s", e.message);
+            return;
+        }
+
+        var files = file_list.get_files ();
+        string[] paths = {};
+        foreach (var file in files) {
+            paths += file.get_path ();
+        }
+
+        unowned var manager = OperationManager.get_instance ();
+        manager.paste_files.begin (paths, directory.path);
+    }
+
+    public void trash () {
+        var selection = selection_model.get_selection ();
+
+        string[] files = new string[selection.get_size ()];
+        for (int i = 0; i < selection.get_size (); i++) {
+            var base_file = (FileBase) selection_model.get_item (selection.get_nth (i));
+            files[i] = base_file.path;
+        }
+
+        OperationManager.get_instance ().push_operation (new TrashOperation (files));
     }
 }

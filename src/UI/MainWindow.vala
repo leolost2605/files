@@ -4,6 +4,22 @@
  */
 
 public class Files.MainWindow : Gtk.ApplicationWindow {
+    public const string ACTION_GROUP_PREFIX = "win";
+    public const string ACTION_PREFIX = ACTION_GROUP_PREFIX + ".";
+    public const string ACTION_COPY = "copy";
+    public const string ACTION_CUT = "cut";
+    public const string ACTION_PASTE = "paste";
+    public const string ACTION_TRASH = "trash";
+
+    private const ActionEntry[] ACTION_ENTRIES = {
+        {ACTION_COPY, on_copy },
+        {ACTION_CUT, on_cut },
+        {ACTION_PASTE, on_paste },
+        {ACTION_TRASH, on_trash },
+    };
+
+    private MainView main_view;
+
     public MainWindow (Gtk.Application application) {
         Object (
             application: application,
@@ -15,6 +31,14 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
     }
 
     construct {
+        add_action_entries (ACTION_ENTRIES, this);
+
+        var application = (Gtk.Application) GLib.Application.get_default ();
+        application.set_accels_for_action (ACTION_PREFIX + ACTION_COPY, {"<Ctrl>c"});
+        application.set_accels_for_action (ACTION_PREFIX + ACTION_CUT, {"<Ctrl>x"});
+        application.set_accels_for_action (ACTION_PREFIX + ACTION_PASTE, {"<Ctrl>v"});
+        application.set_accels_for_action (ACTION_PREFIX + ACTION_TRASH, {"Del"});
+
         var start_header = new Gtk.HeaderBar () {
             show_title_buttons = false,
             title_widget = new Gtk.Label ("")
@@ -31,7 +55,7 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
         end_header.add_css_class (Granite.STYLE_CLASS_FLAT);
         end_header.pack_end (new Gtk.WindowControls (Gtk.PackType.END));
 
-        var main_view = new MainView ();
+        main_view = new MainView ();
 
         var end_box = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
         end_box.add_css_class (Granite.STYLE_CLASS_VIEW);
@@ -53,5 +77,21 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
 
         titlebar = null_title;
         child = paned;
+    }
+
+    private void on_copy () {
+        main_view.copy (false);
+    }
+
+    private void on_cut () {
+        main_view.copy (true);
+    }
+
+    private void on_paste () {
+        main_view.paste.begin ();
+    }
+
+    private void on_trash () {
+        main_view.trash ();
     }
 }
