@@ -4,11 +4,11 @@
  */
 
 public class Files.MoveOperation : ConflictableOperation {
-    public string[] source_paths { get; construct; }
-    public string destination_path { get; construct; }
+    public string[] source_uris { get; construct; }
+    public string destination_uri { get; construct; }
 
-    public MoveOperation (string[] source_paths, string destination_path) {
-        Object (source_paths: source_paths, destination_path: destination_path);
+    public MoveOperation (string[] source_uris, string destination_uri) {
+        Object (source_uris: source_uris, destination_uri: destination_uri);
     }
 
     public override void start () {
@@ -16,14 +16,14 @@ public class Files.MoveOperation : ConflictableOperation {
     }
 
     private async void move () {
-        foreach (var path in source_paths) {
-            var source = File.new_for_path (path);
-            var destination = File.new_build_filename (destination_path, source.get_basename ());
+        foreach (var uri in source_uris) {
+            var source = File.new_for_uri (uri);
+            var destination = File.new_build_filename (destination_uri, source.get_basename ());
 
             try {
                 yield run_conflict_op (source, destination, MOVE);
             } catch (Error e) {
-                report_error ("Failed to move file %s to %s: %s".printf (source.get_path (), destination.get_path (), e.message));
+                report_error ("Failed to move file %s to %s: %s".printf (source.get_uri (), destination.get_uri (), e.message));
             }
         }
 

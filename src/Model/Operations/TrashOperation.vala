@@ -4,10 +4,10 @@
  */
 
 public class Files.TrashOperation : Operation {
-    public string[] source_paths { get; construct; }
+    public string[] source_uris { get; construct; }
 
-    public TrashOperation (string[] source_paths) {
-        Object (source_paths: source_paths);
+    public TrashOperation (string[] source_uris) {
+        Object (source_uris: source_uris);
     }
 
     public override void start () {
@@ -15,13 +15,13 @@ public class Files.TrashOperation : Operation {
     }
 
     private async void trash () {
-        foreach (var path in source_paths) {
-            var source = File.new_for_path (path);
+        foreach (var uri in source_uris) {
+            var source = File.new_for_uri (uri);
 
             try {
                 yield source.trash_async (Priority.DEFAULT, cancellable);
             } catch (Error e) {
-                report_error ("Failed to trash file %s: %s".printf (source.get_path (), e.message));
+                report_error ("Failed to trash file %s: %s".printf (source.get_uri (), e.message));
             }
         }
 

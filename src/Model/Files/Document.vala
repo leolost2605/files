@@ -21,7 +21,7 @@ public class Files.Document : FileBase {
         try {
             yield file_launcher.launch (parent, null);
         } catch (Error e) {
-            critical ("Failed to open file %s: %s", path, e.message);
+            critical ("Failed to open file %s: %s", uri, e.message);
         }
     }
 }

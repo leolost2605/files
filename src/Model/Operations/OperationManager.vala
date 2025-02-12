@@ -33,12 +33,12 @@ public class Files.OperationManager : Object {
         string[] to_copy = {};
 
         foreach (var source in sources) {
-            var base_file = yield FileBase.get_for_path (source);
+            var base_file = yield FileBase.get_for_uri (source);
 
             if (base_file.move_queued) {
-                to_move += base_file.path;
+                to_move += base_file.uri;
             } else {
-                to_copy += base_file.path;
+                to_copy += base_file.uri;
             }
         }
 

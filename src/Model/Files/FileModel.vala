@@ -4,11 +4,11 @@
  */
 
 public class Files.FileModel : Object, ListModel {
-    private Gee.HashSet<string> paths;
+    private Gee.HashSet<string> uris;
     private ListStore store;
 
     construct {
-        paths = new Gee.HashSet<string> ();
+        uris = new Gee.HashSet<string> ();
         store = new ListStore (typeof (FileBase));
         store.items_changed.connect ((pos, removed, added) => items_changed (pos, removed, added));
     }
@@ -25,34 +25,34 @@ public class Files.FileModel : Object, ListModel {
         return store.get_n_items ();
     }
 
-    public async void append (string path) {
-        if (path in paths) {
+    public async void append (string uri) {
+        if (uri in uris) {
             return;
         }
 
-        var file = yield FileBase.get_for_path (path);
+        var file = yield FileBase.get_for_uri (uri);
 
         if (file == null) {
-            warning ("File %s not found.", path);
+            warning ("File %s not found.", uri);
             return;
         }
 
         store.append (file);
     }
 
-    public async void remove (string path) {
-        if (!(path in paths)) {
+    public async void remove (string uri) {
+        if (!(uri in uris)) {
             return;
         }
 
-        var file = yield FileBase.get_for_path (path);
+        var file = yield FileBase.get_for_uri (uri);
 
         // TODO: THIS NEEDS TO BE OPTIMIZED
         uint position;
         store.find (file, out position);
 
         store.remove (position);
-        paths.remove (path);
+        uris.remove (uri);
     }
 
     // We only do append multiple with infos otherwise there's no gain in
@@ -63,12 +63,12 @@ public class Files.FileModel : Object, ListModel {
         foreach (var info in infos) {
             var file = FileBase.get_for_info (parent, info);
 
-            if (file == null || file.path in paths) {
+            if (file == null || file.uri in uris) {
                 additions.resize (additions.length - 1);
                 continue;
             }
 
-            paths.add (file.path);
+            uris.add (file.uri);
             additions[index] = file;
             index++;
         }
@@ -78,6 +78,6 @@ public class Files.FileModel : Object, ListModel {
 
     public void remove_all () {
         store.remove_all ();
-        paths.clear ();
+        uris.clear ();
     }
 }

@@ -24,7 +24,7 @@ public class Files.Directory : FileBase {
             monitor.changed.connect (on_monitor_changed);
         } catch (Error e) {
             if (!(e is IOError.CANCELLED)) {
-                critical ("Error monitoring directory %s: %s", path, e.message);
+                critical ("Error monitoring directory %s: %s", uri, e.message);
             }
         }
 
@@ -32,7 +32,7 @@ public class Files.Directory : FileBase {
             yield load_initial_children ();
         } catch (Error e) {
             if (!(e is IOError.CANCELLED)) {
-                critical ("Error loading initial children for file %s: %s", path, e.message);
+                critical ("Error loading initial children for file %s: %s", uri, e.message);
             }
         }
     }
@@ -40,11 +40,11 @@ public class Files.Directory : FileBase {
     private void on_monitor_changed (File file, File? other_file, FileMonitorEvent event_type) {
         switch (event_type) {
             case CREATED:
-                children.append.begin (file.get_path ());
+                children.append.begin (file.get_uri ());
                 break;
 
             case DELETED:
-                children.remove.begin (file.get_path ());
+                children.remove.begin (file.get_uri ());
                 break;
 
             default:
@@ -59,7 +59,7 @@ public class Files.Directory : FileBase {
              infos.length () > 0;
              infos = yield enumerator.next_files_async (50, Priority.DEFAULT, cancellable)
         ) {
-            children.append_infos (path, (owned) infos);
+            children.append_infos (uri, (owned) infos);
         }
     }
 

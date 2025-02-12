@@ -11,13 +11,13 @@ public abstract class Files.FileBase : Object {
     }
 
     public static FileBase? get_for_info (string parent, FileInfo info) {
-        var path = Path.build_filename (parent, info.get_name ());
+        File parent_file = File.new_for_uri (parent);
 
-        if (path in known_files) {
-            return known_files[path];
+        var file = parent_file.get_child (info.get_name ());
+
+        if (file.get_uri () in known_files) {
+            return known_files[file.get_uri ()];
         }
-
-        var file = File.new_for_path (path);
 
         if (info.get_file_type () == DIRECTORY) {
             return new Directory (file, info);
@@ -27,11 +27,22 @@ public abstract class Files.FileBase : Object {
     }
 
     public static async FileBase? get_for_path (string path) {
-        if (path in known_files) {
-            return known_files[path];
+        try {
+            var uri = Filename.to_uri (path, null);
+            return yield get_for_uri (uri);
+        } catch (Error e) {
+            warning ("Error converting path to URI: %s", e.message);
         }
 
-        var file = File.new_for_path (path);
+        return null;
+    }
+
+    public static async FileBase? get_for_uri (string uri) {
+        if (uri in known_files) {
+            return known_files[uri];
+        }
+
+        var file = File.new_for_uri (uri);
 
         FileInfo info;
         try {
@@ -48,7 +59,7 @@ public abstract class Files.FileBase : Object {
         }
     }
 
-    public string path { get; construct; }
+    public string uri { get; construct; }
     public string basename { get; private set; }
 
     public bool move_queued { get; set; default = false; }
@@ -65,15 +76,15 @@ public abstract class Files.FileBase : Object {
     construct {
         cancellable = new Cancellable ();
 
-        path = file.get_path ();
+        uri = file.get_uri ();
         basename = file.get_basename ();
 
-        known_files[path] = this;
+        known_files[uri] = this;
     }
 
     ~FileBase () {
         cancellable.cancel ();
-        known_files.remove (path);
+        known_files.remove (uri);
     }
 
     public void load () {
@@ -89,7 +100,7 @@ public abstract class Files.FileBase : Object {
 
     public void queue_unload () {
         if (loaded == 0 || unload_timeout_id != 0) {
-            critical ("Unload called on unloaded file %s so to often", path);
+            critical ("Unload called on unloaded file %s so to often", uri);
             return;
         }
 

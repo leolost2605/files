@@ -103,13 +103,13 @@ public class Files.MainView : Granite.Bin {
         }
 
         var files = file_list.get_files ();
-        string[] paths = {};
+        string[] uris = {};
         foreach (var file in files) {
-            paths += file.get_path ();
+            uris += file.get_uri ();
         }
 
         unowned var manager = OperationManager.get_instance ();
-        manager.paste_files.begin (paths, directory.path);
+        manager.paste_files.begin (uris, directory.uri);
     }
 
     public void trash () {
@@ -118,7 +118,7 @@ public class Files.MainView : Granite.Bin {
         string[] files = new string[selection.get_size ()];
         for (int i = 0; i < selection.get_size (); i++) {
             var base_file = (FileBase) selection_model.get_item (selection.get_nth (i));
-            files[i] = base_file.path;
+            files[i] = base_file.uri;
         }
 
         OperationManager.get_instance ().push_operation (new TrashOperation (files));
