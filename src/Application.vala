@@ -3,12 +3,12 @@
 * SPDX-FileCopyrightText: {{YEAR}} {{DEVELOPER_NAME}} <{{DEVELOPER_EMAIL}}>
 */
 
-public class MyApp : Gtk.Application {
+public class Files.Application : Gtk.Application {
     public MainWindow main_window;
 
-    public MyApp () {
+    public Application () {
         Object (
-            application_id: "{{APPLICATION_ID}}",
+            application_id: "io.github.leolost2605.files",
             flags: ApplicationFlags.FLAGS_NONE
         );
     }
@@ -17,6 +17,7 @@ public class MyApp : Gtk.Application {
         base.startup ();
 
         Granite.init ();
+        FileBase.init ();
 
         Intl.setlocale (LocaleCategory.ALL, "");
         Intl.bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
@@ -29,6 +30,16 @@ public class MyApp : Gtk.Application {
         set_accels_for_action ("app.quit", {"<Control>q"});
 
         quit_action.activate.connect (quit);
+
+        // Set default elementary thme
+        var gtk_settings = Gtk.Settings.get_default ();
+        gtk_settings.gtk_icon_theme_name = "elementary";
+        if (!(gtk_settings.gtk_theme_name.has_prefix ("io.elementary.stylesheet"))) {
+            gtk_settings.gtk_theme_name = "io.elementary.stylesheet.blueberry";
+        }
+
+        unowned Gtk.IconTheme default_theme = Gtk.IconTheme.get_for_display (Gdk.Display.get_default ());
+        default_theme.add_resource_path ("io/github/leolost2605/files/");
     }
 
     protected override void activate () {
@@ -44,7 +55,7 @@ public class MyApp : Gtk.Application {
         * Set maximize after height/width else window is min size on unmaximize
         * Bind maximize as SET else get get bad sizes
         */
-        var settings = new Settings ("{{APPLICATION_ID}}");
+        var settings = new Settings ("io.github.leolost2605.files");
         settings.bind ("window-height", main_window, "default-height", SettingsBindFlags.DEFAULT);
         settings.bind ("window-width", main_window, "default-width", SettingsBindFlags.DEFAULT);
 
@@ -56,7 +67,7 @@ public class MyApp : Gtk.Application {
 
         // Use Css
         var provider = new Gtk.CssProvider ();
-        provider.load_from_resource ("/{{APPLICATION_ID_GSCHEMA}}/Application.css");
+        provider.load_from_resource ("/io/github/leolost2605/files/Application.css");
 
         Gtk.StyleContext.add_provider_for_display (
             Gdk.Display.get_default (),
@@ -67,6 +78,6 @@ public class MyApp : Gtk.Application {
     }
 
     public static int main (string[] args) {
-        return new MyApp ().run (args);
+        return new Application ().run (args);
     }
 }

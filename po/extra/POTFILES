@@ -1,2 +1,2 @@
-data/{{PROJECT_NAME}}.metainfo.xml.in
-data/{{PROJECT_NAME}}.desktop.in
+data/files.metainfo.xml.in
+data/files.desktop.in

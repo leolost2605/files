@@ -1,6 +1,6 @@
 # project name and programming language
 project(
-  '{{APPLICATION_ID}}',
+  'io.github.leolost2605.files',
   'vala', 'c',
   version: '0.1'
 )
@@ -24,7 +24,7 @@ config_file = configure_file(
 
 gresource = gnome.compile_resources(
     'as-resources',
-    'data' / '{{PROJECT_NAME}}.gresource.xml',
+    'data' / 'files.gresource.xml',
     source_dir: 'data',
     c_name: 'as'
 )
@@ -35,19 +35,9 @@ deps = [
     dependency('gtk4')
 ]
 
-# Create a new executable, list the files we want to compile, and install
-executable(
-    meson.project_name(),
-    config_file,
-    gresource,
-    'src' / 'Application.vala',
-    'src' / 'MainWindow.vala',
-    dependencies: deps,
-    install: true
-)
-
 subdir('data')
 subdir('po')
+subdir('src')
 
 gnome.post_install(
   glib_compile_schemas: true,
