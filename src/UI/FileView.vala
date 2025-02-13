@@ -3,30 +3,55 @@
  * SPDX-FileCopyrightText: 2025 Leonhard Kargl <leo.kargl@proton.me>
  */
 
-public class Files.MainView : Granite.Bin {
+public class Files.FileView : Granite.Bin {
     private Directory? _directory;
     public Directory? directory {
         get { return _directory; }
         set {
+            if (_directory == value) {
+                return;
+            }
+
             if (_directory != null) {
                 _directory.queue_unload ();
             }
 
             _directory = value;
 
+            if (history.size - 1 > current_index && history.get (current_index + 1) != value) {
+                for (int i = current_index + 1; i < history.size; i++) {
+                    history.remove_at (i);
+                }
+            }
+
             if (value != null) {
                 selection_model.model = value.children;
                 value.load ();
+
+                if (current_index > 0 && value == history.get (current_index - 1)) {
+                    current_index--;
+                } else if (history.size - 1 > current_index && value == history.get (current_index + 1)) {
+                    current_index++;
+                } else {
+                    history.add (value);
+                    current_index++;
+                }
+            } else {
+                //todo show placeholder
             }
         }
     }
 
+    public bool can_go_back { get { return current_index > 0; } }
+    public bool can_go_forward { get { return current_index < history.size - 1; } }
+
+    private Gee.ArrayList<Directory> history;
+    private int current_index = -1;
+
     private Gtk.MultiSelection selection_model;
 
     construct {
-        hexpand = true;
-        vexpand = true;
-
+        history = new Gee.ArrayList<Directory> ();
         selection_model = new Gtk.MultiSelection (null);
 
         var list_view = new ListView (selection_model);
@@ -49,24 +74,43 @@ public class Files.MainView : Granite.Bin {
         main_box.append (move_button);
         main_box.append (paste_button);
 
+        hexpand = true;
+        vexpand = true;
         child = main_box;
 
         list_view.file_activated.connect (on_file_activated);
 
-        load.begin ();
+        map.connect (on_map);
     }
 
     private void on_file_activated (FileBase file) {
         var dir = file.open ((Gtk.Window) get_root ());
 
         if (dir != null) {
-            directory = dir;
+            activate_action_variant (MainWindow.ACTION_PREFIX + MainWindow.ACTION_GOTO, dir.uri);
         }
     }
 
-    private async void load () {
-        var home_dir = (Directory) yield FileBase.get_for_path (Environment.get_home_dir ());
-        directory = home_dir;
+    private void on_map () {
+        if (directory != null) {
+            activate_action_variant (MainWindow.ACTION_PREFIX + MainWindow.ACTION_GOTO, directory.uri);
+        }
+    }
+
+    public void back () {
+        if (current_index == 0) {
+            return;
+        }
+
+        activate_action_variant (MainWindow.ACTION_PREFIX + MainWindow.ACTION_GOTO, history.get (current_index - 1).uri);
+    }
+
+    public void forward () {
+        if (current_index == history.size - 1) {
+            return;
+        }
+
+        activate_action_variant (MainWindow.ACTION_PREFIX + MainWindow.ACTION_GOTO, history.get (current_index + 1).uri);
     }
 
     public void copy (bool move) {

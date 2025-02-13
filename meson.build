@@ -32,7 +32,8 @@ gresource = gnome.compile_resources(
 # List the dependencies we need
 deps = [
     dependency('granite-7'),
-    dependency('gtk4')
+    dependency('gtk4'),
+    dependency('libadwaita-1'),
 ]
 
 subdir('data')

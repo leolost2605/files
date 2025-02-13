@@ -1,6 +1,7 @@
 sources = [
     'Application.vala',
-    'UI' / 'MainView.vala',
+    'UI' / 'FileView.vala',
+    'UI' / 'HeaderBar.vala',
     'UI' / 'MainWindow.vala',
     'UI' / 'ListView' / 'FileRow.vala',
     'UI' / 'ListView' / 'ListView.vala',

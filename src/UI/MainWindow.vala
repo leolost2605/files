@@ -10,15 +10,36 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
     public const string ACTION_CUT = "cut";
     public const string ACTION_PASTE = "paste";
     public const string ACTION_TRASH = "trash";
+    public const string ACTION_GOTO = "goto";
+    public const string ACTION_BACK = "back";
+    public const string ACTION_FORWARD = "forward";
+    public const string ACTION_NEW_TAB = "new-tab";
 
     private const ActionEntry[] ACTION_ENTRIES = {
         {ACTION_COPY, on_copy },
         {ACTION_CUT, on_cut },
         {ACTION_PASTE, on_paste },
         {ACTION_TRASH, on_trash },
+        {ACTION_GOTO, on_goto, "s" },
+        {ACTION_BACK, on_back, },
+        {ACTION_FORWARD, on_forward, },
+        {ACTION_NEW_TAB, on_new_tab, },
     };
 
-    private MainView main_view;
+    public Directory? directory {
+        set {
+            selected_view.directory = value;
+            end_header.directory = value;
+            update_actions ();
+        }
+    }
+
+    public FileView selected_view {
+        get { return (FileView) tab_view.selected_page.child; }
+    }
+
+    private HeaderBar end_header;
+    private Adw.TabView tab_view;
 
     public MainWindow (Gtk.Application application) {
         Object (
@@ -38,31 +59,33 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
         application.set_accels_for_action (ACTION_PREFIX + ACTION_CUT, {"<Ctrl>x"});
         application.set_accels_for_action (ACTION_PREFIX + ACTION_PASTE, {"<Ctrl>v"});
         application.set_accels_for_action (ACTION_PREFIX + ACTION_TRASH, {"Del"});
+        application.set_accels_for_action (ACTION_PREFIX + ACTION_NEW_TAB, {"<Ctrl>t"});
 
         var start_header = new Gtk.HeaderBar () {
             show_title_buttons = false,
             title_widget = new Gtk.Label ("")
         };
         start_header.add_css_class (Granite.STYLE_CLASS_FLAT);
-        start_header.pack_start (new Gtk.WindowControls (Gtk.PackType.START));
+        start_header.pack_start (new Gtk.WindowControls (START));
 
-        var start_box = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+        var start_box = new Gtk.Box (VERTICAL, 0);
         start_box.append (start_header);
 
-        var end_header = new Gtk.HeaderBar () {
-            show_title_buttons = false
+        end_header = new HeaderBar ();
+
+        tab_view = new Adw.TabView ();
+
+        var tab_bar = new Adw.TabBar () {
+            view = tab_view
         };
-        end_header.add_css_class (Granite.STYLE_CLASS_FLAT);
-        end_header.pack_end (new Gtk.WindowControls (Gtk.PackType.END));
 
-        main_view = new MainView ();
-
-        var end_box = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+        var end_box = new Gtk.Box (VERTICAL, 0);
         end_box.add_css_class (Granite.STYLE_CLASS_VIEW);
         end_box.append (end_header);
-        end_box.append (main_view);
+        end_box.append (tab_bar);
+        end_box.append (tab_view);
 
-        var paned = new Gtk.Paned (Gtk.Orientation.HORIZONTAL) {
+        var paned = new Gtk.Paned (HORIZONTAL) {
             position = 275,
             start_child = start_box,
             end_child = end_box,
@@ -77,21 +100,70 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
 
         titlebar = null_title;
         child = paned;
+
+        on_new_tab ();
+    }
+
+    private void update_actions () {
+        var back = (SimpleAction) lookup_action (MainWindow.ACTION_BACK);
+        var forward = (SimpleAction) lookup_action (MainWindow.ACTION_FORWARD);
+
+        back.set_enabled (selected_view.can_go_back);
+        forward.set_enabled (selected_view.can_go_forward);
     }
 
     private void on_copy () {
-        main_view.copy (false);
+        selected_view.copy (false);
     }
 
     private void on_cut () {
-        main_view.copy (true);
+        selected_view.copy (true);
     }
 
     private void on_paste () {
-        main_view.paste.begin ();
+        selected_view.paste.begin ();
     }
 
     private void on_trash () {
-        main_view.trash ();
+        selected_view.trash ();
+    }
+
+    private void on_goto (SimpleAction action, Variant? uri) {
+        goto.begin ((string) uri);
+    }
+
+    private async void goto (string uri) {
+        var file = yield FileBase.get_for_uri ((string) uri);
+
+        if (file == null) {
+            directory = null;
+            return;
+        }
+
+        if (file is Directory) {
+            directory = (Directory) file;
+        } else {
+            directory = yield file.get_parent ();
+            //todo select file
+        }
+    }
+
+    private void on_back () {
+        selected_view.back ();
+    }
+
+    private void on_forward () {
+        selected_view.forward ();
+    }
+
+    private void on_new_tab () {
+        tab_view.selected_page = tab_view.append (new FileView ());
+
+        try {
+            var home_uri = Filename.to_uri (Environment.get_home_dir (), null);
+            activate_action_variant (MainWindow.ACTION_PREFIX + MainWindow.ACTION_GOTO, home_uri);
+        } catch (Error e) {
+            warning ("Error converting path to URI: %s", e.message);
+        }
     }
 }
