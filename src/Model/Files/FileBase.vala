@@ -62,6 +62,11 @@ public abstract class Files.FileBase : Object {
     public string uri { get; construct; }
     public string basename { get; private set; }
 
+    /**
+     * A translated string representing the size of the file.
+     */
+    public string size { get; private set; }
+
     public bool move_queued { get; set; default = false; }
 
     public File file { get; construct; }

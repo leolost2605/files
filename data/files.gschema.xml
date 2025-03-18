@@ -17,4 +17,14 @@
       <description>Whether the main window of the application should open maximized or not.</description>
     </key>
   </schema>
+  <schema path="/io/github/leolost2605/files/list-view/" id="io.github.leolost2605.files.list-view">
+    <key name="name-width" type="i">
+      <default>500</default>
+      <summary>Size of the name column</summary>
+    </key>
+    <key name="size-width" type="i">
+      <default>50</default>
+      <summary>Size of the size column</summary>
+    </key>
+  </schema>
 </schemalist>

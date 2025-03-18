@@ -3,6 +3,29 @@
  * SPDX-FileCopyrightText: 2025 Leonhard Kargl <leo.kargl@proton.me>
  */
 
+public enum Files.CellType {
+    NAME,
+    SIZE,
+}
+
+public enum Files.ViewType {
+    LIST,
+    GRID;
+
+    public static ViewType from_string (string str) {
+        switch (str) {
+            case "list":
+                return LIST;
+
+            case "grid":
+                return GRID;
+        }
+
+        warning ("Unknown view type: %s", str);
+        return LIST;
+    }
+}
+
 public class Files.FileView : Granite.Bin {
     private Directory? _directory;
     public Directory? directory {
@@ -25,7 +48,7 @@ public class Files.FileView : Granite.Bin {
             }
 
             if (value != null) {
-                selection_model.model = value.children;
+                sort_model.model = value.children;
                 value.load ();
 
                 if (current_index > 0 && value == history.get (current_index - 1)) {
@@ -42,19 +65,39 @@ public class Files.FileView : Granite.Bin {
         }
     }
 
+    public ViewType current_view {
+        get { return ViewType.from_string (stack.visible_child_name); }
+        set { stack.visible_child_name = value.to_string (); }
+    }
+
     public bool can_go_back { get { return current_index > 0; } }
     public bool can_go_forward { get { return current_index < history.size - 1; } }
 
     private Gee.ArrayList<Directory> history;
     private int current_index = -1;
 
+    private Gtk.SortListModel sort_model;
     private Gtk.MultiSelection selection_model;
+
+    private ListView list_view;
+
+    private Gtk.Stack stack;
 
     construct {
         history = new Gee.ArrayList<Directory> ();
-        selection_model = new Gtk.MultiSelection (null);
+        sort_model = new Gtk.SortListModel (null, null);
+        selection_model = new Gtk.MultiSelection (sort_model);
 
-        var list_view = new ListView (selection_model);
+        // The ListView is our "master" view for sorting since it handles it via the column view
+        Gtk.Sorter sorter;
+        list_view = new ListView (selection_model, out sorter);
+        sort_model.sorter = sorter;
+
+        var grid_view = new GridView (selection_model);
+
+        stack = new Gtk.Stack ();
+        stack.add_named (list_view, ViewType.LIST.to_string ());
+        stack.add_named (grid_view, ViewType.GRID.to_string ());
 
         var copy_button = new Gtk.Button.with_label ("Copy") {
             action_name = MainWindow.ACTION_PREFIX + MainWindow.ACTION_COPY,
@@ -69,7 +112,7 @@ public class Files.FileView : Granite.Bin {
         };
 
         var main_box = new Gtk.Box (VERTICAL, 6);
-        main_box.append (list_view);
+        main_box.append (stack);
         main_box.append (copy_button);
         main_box.append (move_button);
         main_box.append (paste_button);
