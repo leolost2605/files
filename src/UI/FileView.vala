@@ -78,9 +78,15 @@ public class Files.FileView : Granite.Bin {
         vexpand = true;
         child = main_box;
 
-        list_view.file_activated.connect (on_file_activated);
-
         map.connect (on_map);
+
+        list_view.file_activated.connect (on_file_activated);
+    }
+
+    private void on_map () {
+        if (directory != null) {
+            activate_action_variant (MainWindow.ACTION_PREFIX + MainWindow.ACTION_GOTO, directory.uri);
+        }
     }
 
     private void on_file_activated (FileBase file) {
@@ -88,12 +94,6 @@ public class Files.FileView : Granite.Bin {
 
         if (dir != null) {
             activate_action_variant (MainWindow.ACTION_PREFIX + MainWindow.ACTION_GOTO, dir.uri);
-        }
-    }
-
-    private void on_map () {
-        if (directory != null) {
-            activate_action_variant (MainWindow.ACTION_PREFIX + MainWindow.ACTION_GOTO, directory.uri);
         }
     }
 
