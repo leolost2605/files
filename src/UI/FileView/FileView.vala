@@ -12,6 +12,20 @@ public enum Files.ViewType {
     LIST,
     GRID;
 
+    public string to_string () {
+        switch (this) {
+            case LIST:
+                return "list";
+
+            case GRID:
+                return "grid";
+
+            default:
+                warning ("Unknown view type: %d", (int) this);
+                return "list";
+        }
+    }
+
     public static ViewType from_string (string str) {
         switch (str) {
             case "list":
@@ -65,7 +79,7 @@ public class Files.FileView : Granite.Bin {
         }
     }
 
-    public ViewType current_view {
+    public ViewType view_type {
         get { return ViewType.from_string (stack.visible_child_name); }
         set { stack.visible_child_name = value.to_string (); }
     }
@@ -99,27 +113,9 @@ public class Files.FileView : Granite.Bin {
         stack.add_named (list_view, ViewType.LIST.to_string ());
         stack.add_named (grid_view, ViewType.GRID.to_string ());
 
-        var copy_button = new Gtk.Button.with_label ("Copy") {
-            action_name = MainWindow.ACTION_PREFIX + MainWindow.ACTION_COPY,
-        };
-
-        var move_button = new Gtk.Button.with_label ("Move") {
-            action_name = MainWindow.ACTION_PREFIX + MainWindow.ACTION_CUT,
-        };
-
-        var paste_button = new Gtk.Button.with_label ("Paste") {
-            action_name = MainWindow.ACTION_PREFIX + MainWindow.ACTION_PASTE,
-        };
-
-        var main_box = new Gtk.Box (VERTICAL, 6);
-        main_box.append (stack);
-        main_box.append (copy_button);
-        main_box.append (move_button);
-        main_box.append (paste_button);
-
         hexpand = true;
         vexpand = true;
-        child = main_box;
+        child = stack;
 
         map.connect (on_map);
 
@@ -127,9 +123,14 @@ public class Files.FileView : Granite.Bin {
     }
 
     private void on_map () {
+        /* We have to activate the actions after we are mapped because mapping means we are now the visible tab.
+         * So we have to make sure that the header bar is up to date with our values
+         */
         if (directory != null) {
             activate_action_variant (MainWindow.ACTION_PREFIX + MainWindow.ACTION_GOTO, directory.uri);
         }
+
+        activate_action_variant (MainWindow.ACTION_PREFIX + MainWindow.ACTION_SELECT_VIEW_TYPE, (int) view_type);
     }
 
     private void on_file_activated (FileBase file) {

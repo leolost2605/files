@@ -18,7 +18,11 @@ public class Files.GridView : Granite.Bin {
 
         var grid_view = new Gtk.GridView (selection_model, factory);
 
-        child = grid_view;
+        var scrolled_window = new Gtk.ScrolledWindow () {
+            child = grid_view
+        };
+
+        child = scrolled_window;
     }
 
     private void setup_cell (Object obj) {

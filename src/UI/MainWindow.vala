@@ -14,6 +14,7 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
     public const string ACTION_BACK = "back";
     public const string ACTION_FORWARD = "forward";
     public const string ACTION_NEW_TAB = "new-tab";
+    public const string ACTION_SELECT_VIEW_TYPE = "select-view-type";
 
     private const ActionEntry[] ACTION_ENTRIES = {
         {ACTION_COPY, on_copy },
@@ -24,6 +25,7 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
         {ACTION_BACK, on_back, },
         {ACTION_FORWARD, on_forward, },
         {ACTION_NEW_TAB, on_new_tab, },
+        {ACTION_SELECT_VIEW_TYPE, on_select_view_type, "i" },
     };
 
     public Directory? directory {
@@ -31,6 +33,13 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
             selected_view.directory = value;
             end_header.directory = value;
             update_actions ();
+        }
+    }
+
+    public ViewType view_type {
+        set {
+            selected_view.view_type = value;
+            end_header.view_type = value;
         }
     }
 
@@ -157,7 +166,20 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
     }
 
     private void on_new_tab () {
-        tab_view.selected_page = tab_view.append (new FileView ());
+        var file_view = new FileView ();
+        var page = tab_view.append (file_view);
+
+        file_view.bind_property ("directory", page, "title", SYNC_CREATE, (binding, from, ref to) => {
+            var directory = (Directory) from.get_object ();
+            if (directory != null) {
+                to.set_string (directory.basename);
+            } else {
+                to.set_string ("n/a");
+            }
+            return true;
+        });
+
+        tab_view.selected_page = page;
 
         try {
             var home_uri = Filename.to_uri (Environment.get_home_dir (), null);
@@ -165,5 +187,9 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
         } catch (Error e) {
             warning ("Error converting path to URI: %s", e.message);
         }
+    }
+
+    private void on_select_view_type (SimpleAction action, Variant? type) {
+        view_type = (ViewType) type.get_int32 ();
     }
 }
