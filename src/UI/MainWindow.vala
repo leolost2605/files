@@ -14,7 +14,7 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
     public const string ACTION_BACK = "back";
     public const string ACTION_FORWARD = "forward";
     public const string ACTION_NEW_TAB = "new-tab";
-    public const string ACTION_SELECT_VIEW_TYPE = "select-view-type";
+    public const string ACTION_VIEW_TYPE = "view-type";
 
     private const ActionEntry[] ACTION_ENTRIES = {
         {ACTION_COPY, on_copy },
@@ -25,21 +25,13 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
         {ACTION_BACK, on_back, },
         {ACTION_FORWARD, on_forward, },
         {ACTION_NEW_TAB, on_new_tab, },
-        {ACTION_SELECT_VIEW_TYPE, on_select_view_type, "i" },
+        {ACTION_VIEW_TYPE, null, "i" , "0", on_view_type_changed },
     };
 
     public Directory? directory {
         set {
             selected_view.directory = value;
             end_header.directory = value;
-            update_actions ();
-        }
-    }
-
-    public ViewType view_type {
-        set {
-            selected_view.view_type = value;
-            end_header.view_type = value;
         }
     }
 
@@ -113,14 +105,6 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
         on_new_tab ();
     }
 
-    private void update_actions () {
-        var back = (SimpleAction) lookup_action (MainWindow.ACTION_BACK);
-        var forward = (SimpleAction) lookup_action (MainWindow.ACTION_FORWARD);
-
-        back.set_enabled (selected_view.can_go_back);
-        forward.set_enabled (selected_view.can_go_forward);
-    }
-
     private void on_copy () {
         selected_view.copy (false);
     }
@@ -189,7 +173,8 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
         }
     }
 
-    private void on_select_view_type (SimpleAction action, Variant? type) {
-        view_type = (ViewType) type.get_int32 ();
+    private void on_view_type_changed (SimpleAction action, Variant view_type) {
+        selected_view.view_type = (ViewType) view_type.get_int32 ();
+        action.set_state (view_type);
     }
 }

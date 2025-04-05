@@ -76,6 +76,8 @@ public class Files.FileView : Granite.Bin {
             } else {
                 //todo show placeholder
             }
+
+            sync_history_actions ();
         }
     }
 
@@ -83,9 +85,6 @@ public class Files.FileView : Granite.Bin {
         get { return ViewType.from_string (stack.visible_child_name); }
         set { stack.visible_child_name = value.to_string (); }
     }
-
-    public bool can_go_back { get { return current_index > 0; } }
-    public bool can_go_forward { get { return current_index < history.size - 1; } }
 
     private Gee.ArrayList<Directory> history;
     private int current_index = -1;
@@ -130,7 +129,28 @@ public class Files.FileView : Granite.Bin {
             activate_action_variant (MainWindow.ACTION_PREFIX + MainWindow.ACTION_GOTO, directory.uri);
         }
 
-        activate_action_variant (MainWindow.ACTION_PREFIX + MainWindow.ACTION_SELECT_VIEW_TYPE, (int) view_type);
+        var action_group = (ActionGroup) get_ancestor (typeof (ActionGroup));
+
+        if (action_group == null) {
+            warning ("No parent action group found");
+            return;
+        }
+
+        action_group.change_action_state (MainWindow.ACTION_VIEW_TYPE, (int) view_type);
+
+        sync_history_actions ();
+    }
+
+    private void sync_history_actions () {
+        var main_window = (MainWindow) get_ancestor (typeof (MainWindow));
+
+        if (main_window != null) {
+            var back = (SimpleAction) main_window.lookup_action (MainWindow.ACTION_BACK);
+            var forward = (SimpleAction) main_window.lookup_action (MainWindow.ACTION_FORWARD);
+
+            back.set_enabled (current_index > 0);
+            forward.set_enabled (current_index < history.size - 1);
+        }
     }
 
     private void on_file_activated (FileBase file) {
