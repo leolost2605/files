@@ -15,7 +15,14 @@ public class Files.FileCell : Granite.Bin {
     }
 
     construct {
-        label = new Gtk.Label (null);
+        label = new Gtk.Label (null) {
+            halign = START
+        };
+
+        if (cell_type != NAME) {
+            label.add_css_class (Granite.CssClass.DIM);
+        }
+
         child = label;
     }
 
