@@ -131,6 +131,23 @@ public class Files.FileView : Granite.Bin {
             }
             return true;
         }, () => {}, null, null);
+
+        settings.bind_with_mapping ("sort-folders-before-files", sort_model, "section-sorter", GET, (val, variant, user_data) => {
+            if ((bool) variant) {
+                val.set_object (new Gtk.CustomSorter ((a, b) => {
+                    if (a is Directory && b is Directory) {
+                        return 0;
+                    } else if (a is Directory) {
+                        return -1;
+                    } else {
+                        return 1;
+                    }
+                }));
+            } else {
+                val.set_object (null);
+            }
+            return true;
+        }, () => {}, null, null);
     }
 
     private void on_map () {

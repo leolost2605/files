@@ -21,6 +21,11 @@
       <summary>Whether to show hidden files.</summary>
       <description>Whether files that are hidden should be shown.</description>
     </key>
+    <key name="sort-folders-before-files" type="b">
+      <default>true</default>
+      <summary>Whether to sort folders before files.</summary>
+      <description>Whether to group folders and sort them before files.</description>
+    </key>
   </schema>
   <schema path="/io/github/leolost2605/files/list-view/" id="io.github.leolost2605.files.list-view">
     <key name="name-width" type="i">

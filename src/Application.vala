@@ -8,6 +8,7 @@ private static Settings settings;
 public class Files.Application : Gtk.Application {
     public const string ACTION_PREFIX = "app.";
     public const string ACTION_SHOW_HIDDEN_FILES = "show-hidden-files";
+    public const string ACTION_SORT_FOLDERS_BEFORE_FILES = "sort-folders-before-files";
 
     static construct {
         settings = new Settings ("io.github.leolost2605.files");
@@ -41,6 +42,7 @@ public class Files.Application : Gtk.Application {
         quit_action.activate.connect (quit);
 
         add_action (settings.create_action (ACTION_SHOW_HIDDEN_FILES));
+        add_action (settings.create_action (ACTION_SORT_FOLDERS_BEFORE_FILES));
 
         // Set default elementary thme
         var gtk_settings = Gtk.Settings.get_default ();
