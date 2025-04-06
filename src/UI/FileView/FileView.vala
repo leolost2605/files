@@ -62,7 +62,7 @@ public class Files.FileView : Granite.Bin {
             }
 
             if (value != null) {
-                sort_model.model = value.children;
+                filter_model.model = value.children;
                 value.load ();
 
                 if (current_index > 0 && value == history.get (current_index - 1)) {
@@ -89,7 +89,7 @@ public class Files.FileView : Granite.Bin {
     private Gee.ArrayList<Directory> history;
     private int current_index = -1;
 
-    private Gtk.SortListModel sort_model;
+    private Gtk.FilterListModel filter_model;
     private Gtk.MultiSelection selection_model;
 
     private ListView list_view;
@@ -98,7 +98,9 @@ public class Files.FileView : Granite.Bin {
 
     construct {
         history = new Gee.ArrayList<Directory> ();
-        sort_model = new Gtk.SortListModel (null, null);
+
+        filter_model = new Gtk.FilterListModel (null, null);
+        var sort_model = new Gtk.SortListModel (filter_model, null);
         selection_model = new Gtk.MultiSelection (sort_model);
 
         // The ListView is our "master" view for sorting since it handles it via the column view
@@ -120,6 +122,15 @@ public class Files.FileView : Granite.Bin {
         unmap.connect (on_unmap);
 
         list_view.file_activated.connect (on_file_activated);
+
+        settings.bind_with_mapping ("show-hidden-files", filter_model, "filter", GET, (val, variant, user_data) => {
+            if ((bool) variant) {
+                val.set_object (null);
+            } else {
+                val.set_object (new Gtk.BoolFilter (new Gtk.PropertyExpression (typeof (FileBase), null, "hidden")) { invert = true });
+            }
+            return true;
+        }, () => {}, null, null);
     }
 
     private void on_map () {

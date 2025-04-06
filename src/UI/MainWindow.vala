@@ -69,16 +69,6 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
         application.set_accels_for_action (ACTION_PREFIX + ACTION_NEW_TAB, {"<Ctrl>t"});
         application.set_accels_for_action (ACTION_PREFIX + ACTION_RENAME, {"F2"});
 
-        var start_header = new Gtk.HeaderBar () {
-            show_title_buttons = false,
-            title_widget = new Gtk.Label ("")
-        };
-        start_header.add_css_class (Granite.STYLE_CLASS_FLAT);
-        start_header.pack_start (new Gtk.WindowControls (START));
-
-        var start_box = new Gtk.Box (VERTICAL, 0);
-        start_box.append (start_header);
-
         end_header = new HeaderBar ();
 
         tab_view = new Adw.TabView ();
@@ -95,7 +85,7 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
 
         var paned = new Gtk.Paned (HORIZONTAL) {
             position = 275,
-            start_child = start_box,
+            start_child = new SideBar (),
             end_child = end_box,
             resize_start_child = false,
             shrink_end_child = false,

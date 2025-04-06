@@ -3,7 +3,16 @@
 * SPDX-FileCopyrightText: {{YEAR}} {{DEVELOPER_NAME}} <{{DEVELOPER_EMAIL}}>
 */
 
+private static Settings settings;
+
 public class Files.Application : Gtk.Application {
+    public const string ACTION_PREFIX = "app.";
+    public const string ACTION_SHOW_HIDDEN_FILES = "show-hidden-files";
+
+    static construct {
+        settings = new Settings ("io.github.leolost2605.files");
+    }
+
     public MainWindow main_window;
 
     public Application () {
@@ -31,6 +40,8 @@ public class Files.Application : Gtk.Application {
 
         quit_action.activate.connect (quit);
 
+        add_action (settings.create_action (ACTION_SHOW_HIDDEN_FILES));
+
         // Set default elementary thme
         var gtk_settings = Gtk.Settings.get_default ();
         gtk_settings.gtk_icon_theme_name = "elementary";
@@ -55,7 +66,6 @@ public class Files.Application : Gtk.Application {
         * Set maximize after height/width else window is min size on unmaximize
         * Bind maximize as SET else get get bad sizes
         */
-        var settings = new Settings ("io.github.leolost2605.files");
         settings.bind ("window-height", main_window, "default-height", SettingsBindFlags.DEFAULT);
         settings.bind ("window-width", main_window, "default-width", SettingsBindFlags.DEFAULT);
 

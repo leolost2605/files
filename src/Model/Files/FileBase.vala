@@ -100,11 +100,19 @@ public abstract class Files.FileBase : Object {
         }
     }
 
-    public FileInfo info { protected get; protected construct set; }
+    private FileInfo? _info;
+    public FileInfo info {
+        protected get { return _info; }
+        protected construct set {
+            _info = value;
+            hidden = _info.get_is_hidden ();
+        }
+    }
 
     // Properties of the file that are always valid. Note they may change during the lifetime of #this
     public string uri { get; private set; }
     public string basename { get; private set; }
+    public bool hidden { get; private set; }
 
     // Properties of the file that are only valid after it has been loaded
 

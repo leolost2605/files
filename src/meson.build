@@ -8,6 +8,7 @@ sources = [
     'UI' / 'FileView' / 'GridView' / 'GridView.vala',
     'UI' / 'FileView' / 'ListView' / 'FileCell.vala',
     'UI' / 'FileView' / 'ListView' / 'ListView.vala',
+    'UI' / 'SideBar' / 'SideBar.vala',
     'Model' / 'Files' / 'Directory.vala',
     'Model' / 'Files' / 'Document.vala',
     'Model' / 'Files' / 'FileBase.vala',
