@@ -35,15 +35,17 @@ public class Files.HeaderBar : Granite.Bin {
             icon_name = "view-list-symbolic",
             action_name = MainWindow.ACTION_PREFIX + MainWindow.ACTION_VIEW_TYPE,
             action_target = (int) ViewType.LIST,
+            valign = CENTER,
         };
 
         var grid_view_toggle = new Gtk.ToggleButton () {
             icon_name = "view-grid-symbolic",
             action_name = MainWindow.ACTION_PREFIX + MainWindow.ACTION_VIEW_TYPE,
             action_target = (int) ViewType.GRID,
+            valign = CENTER,
         };
 
-        var toggles = new Gtk.Box (HORIZONTAL, 0);
+        var toggles = new Granite.Box (HORIZONTAL, LINKED);
         toggles.append (list_view_toggle);
         toggles.append (grid_view_toggle);
 
