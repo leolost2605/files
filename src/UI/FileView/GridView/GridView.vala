@@ -23,6 +23,8 @@ public class Files.GridView : Granite.Bin {
         };
 
         child = scrolled_window;
+
+        grid_view.activate.connect (on_activate);
     }
 
     private void setup_cell (Object obj) {
@@ -30,5 +32,9 @@ public class Files.GridView : Granite.Bin {
         var cell = new GridCell ();
         cell.do_common_setup (item);
         item.child = cell;
+    }
+
+    private void on_activate () {
+        activate_action_variant (MainWindow.ACTION_PREFIX + MainWindow.ACTION_OPEN, OpenHint.NONE);
     }
 }
