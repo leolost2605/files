@@ -111,11 +111,13 @@ public abstract class Files.FileBase : Object {
     /**
      * A translated string representing the size of the file. Has to be loaded.
      */
-    public string size { get; protected set; }
+    public string display_size { get; protected set; }
+    public int64 size { get; protected set; default = 0; }
 
     // Misc stuff
     public bool move_queued { get; set; default = false; }
 
+    private bool refreshing = false;
     private uint loaded = 0;
     private uint unload_timeout_id = 0;
 
@@ -137,7 +139,7 @@ public abstract class Files.FileBase : Object {
         if (unload_timeout_id != 0) {
             Source.remove (unload_timeout_id);
             unload_timeout_id = 0;
-        } else if (loaded == 0) {
+        } else if (loaded == 0 && !refreshing) {
             load_internal.begin ();
         }
 
@@ -152,7 +154,7 @@ public abstract class Files.FileBase : Object {
 
         loaded--;
 
-        if (loaded == 0) {
+        if (loaded == 0 && !refreshing) {
             unload_timeout_id = Timeout.add_seconds (5, unload_timeout_func);
         }
     }
@@ -184,11 +186,27 @@ public abstract class Files.FileBase : Object {
     }
 
     public async void refresh () {
+        refreshing = true;
+
+        if (unload_timeout_id != 0) {
+            Source.remove (unload_timeout_id);
+            unload_timeout_id = 0;
+            yield unload_internal ();
+        } else if (loaded > 0) {
+            yield unload_internal ();
+        }
+
         try {
             info = yield file.query_info_async ("standard::*", NONE, Priority.DEFAULT, cancellable);
         } catch (Error e) {
             warning ("Error refreshing file info: %s", e.message);
         }
+
+        if (loaded > 0) {
+            yield load_internal ();
+        }
+
+        refreshing = false;
     }
 
     /**

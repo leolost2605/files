@@ -14,6 +14,9 @@ public class Files.Directory : FileBase {
 
     construct {
         children = new FileModel ();
+
+        bind_property ("size", this, "display-size", SYNC_CREATE);
+        children.bind_property ("n-items", this, "size");
     }
 
     protected override async void load_internal () {

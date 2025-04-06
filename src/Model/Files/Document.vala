@@ -8,6 +8,11 @@ public class Files.Document : FileBase {
         Object (file: file, info: info);
     }
 
+    protected override async void load_internal () {
+        size = info.get_size ();
+        display_size = GLib.format_size (size, DEFAULT);
+    }
+
     public override Directory? open (Gtk.Window? parent) {
         launch.begin (parent);
         return null;

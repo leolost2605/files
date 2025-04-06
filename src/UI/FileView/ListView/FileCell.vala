@@ -25,7 +25,7 @@ public class Files.FileCell : Granite.Bin {
                 binding = file.bind_property ("basename", label, "label", SYNC_CREATE);
                 break;
             case CellType.SIZE:
-                binding = file.bind_property ("size", label, "label", SYNC_CREATE);
+                binding = file.bind_property ("display-size", label, "label", SYNC_CREATE);
                 break;
         }
     }

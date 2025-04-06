@@ -4,6 +4,8 @@
  */
 
 public class Files.FileModel : Object, ListModel {
+    public uint n_items { get; protected set; }
+
     private Gee.HashSet<string> uris;
     private ListStore store;
 
@@ -11,6 +13,8 @@ public class Files.FileModel : Object, ListModel {
         uris = new Gee.HashSet<string> ();
         store = new ListStore (typeof (FileBase));
         store.items_changed.connect ((pos, removed, added) => items_changed (pos, removed, added));
+
+        store.bind_property ("n-items", this, "n-items");
     }
 
     public Object? get_item (uint position) {
