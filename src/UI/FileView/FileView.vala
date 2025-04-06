@@ -231,4 +231,15 @@ public class Files.FileView : Granite.Bin {
 
         OperationManager.get_instance ().push_operation (new TrashOperation (files));
     }
+
+    public void rename () {
+        var selection = selection_model.get_selection ();
+
+        if (selection.get_size () == 1) {
+            var base_file = (FileBase) selection_model.get_item (selection.get_nth (0));
+            new RenameDialog (base_file).present ();
+        } else {
+            warning ("Renaming multiple files is not supported yet");
+        }
+    }
 }

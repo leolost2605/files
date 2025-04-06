@@ -51,6 +51,15 @@ public class Files.OperationManager : Object {
         }
     }
 
+    public void rename_files (string[] uris, string[] new_names) {
+        if (uris.length != new_names.length) {
+            warning ("Source URIs and new names must have the same length.");
+            return;
+        }
+
+        push_operation (new RenameOperation (uris, new_names));
+    }
+
     public void push_operation (Operation operation) {
         if (current_operations.n_items >= 5) {
             pending_operations.offer (operation);

@@ -37,7 +37,7 @@ public class Files.Directory : FileBase {
         }
     }
 
-    private void on_monitor_changed (File file, File? other_file, FileMonitorEvent event_type) {
+    private async void on_monitor_changed (File file, File? other_file, FileMonitorEvent event_type) {
         switch (event_type) {
             case CREATED:
                 children.append.begin (file.get_uri ());
@@ -45,6 +45,15 @@ public class Files.Directory : FileBase {
 
             case DELETED:
                 children.remove.begin (file.get_uri ());
+                break;
+
+            case MOVED:
+                if (other_file != null && other_file.get_parent ().equal (file.get_parent ())) {
+                    var base_file = yield FileBase.get_for_uri (file.get_uri ());
+                    base_file.rename (other_file);
+                } else {
+                    children.remove.begin (file.get_uri ());
+                }
                 break;
 
             default:

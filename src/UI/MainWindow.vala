@@ -15,6 +15,7 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
     public const string ACTION_FORWARD = "forward";
     public const string ACTION_NEW_TAB = "new-tab";
     public const string ACTION_VIEW_TYPE = "view-type";
+    public const string ACTION_RENAME = "rename";
 
     private const ActionEntry[] ACTION_ENTRIES = {
         {ACTION_COPY, on_copy },
@@ -26,6 +27,7 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
         {ACTION_FORWARD, on_forward, },
         {ACTION_NEW_TAB, on_new_tab, },
         {ACTION_VIEW_TYPE, null, "i" , "0", on_view_type_changed },
+        {ACTION_RENAME, on_rename },
     };
 
     public Directory? directory {
@@ -61,6 +63,7 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
         application.set_accels_for_action (ACTION_PREFIX + ACTION_PASTE, {"<Ctrl>v"});
         application.set_accels_for_action (ACTION_PREFIX + ACTION_TRASH, {"Del"});
         application.set_accels_for_action (ACTION_PREFIX + ACTION_NEW_TAB, {"<Ctrl>t"});
+        application.set_accels_for_action (ACTION_PREFIX + ACTION_RENAME, {"F2"});
 
         var start_header = new Gtk.HeaderBar () {
             show_title_buttons = false,
@@ -176,5 +179,9 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
     private void on_view_type_changed (SimpleAction action, Variant view_type) {
         selected_view.view_type = (ViewType) view_type.get_int32 ();
         action.set_state (view_type);
+    }
+
+    private void on_rename () {
+        selected_view.rename ();
     }
 }

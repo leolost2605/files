@@ -2,6 +2,7 @@ sources = [
     'Application.vala',
     'UI' / 'HeaderBar.vala',
     'UI' / 'MainWindow.vala',
+    'UI' / 'Dialogs' / 'RenameDialog.vala',
     'UI' / 'FileView' / 'FileView.vala',
     'UI' / 'FileView' / 'GridView' / 'GridCell.vala',
     'UI' / 'FileView' / 'GridView' / 'GridView.vala',
@@ -16,6 +17,7 @@ sources = [
     'Model' / 'Operations' / 'MoveOperation.vala',
     'Model' / 'Operations' / 'Operation.vala',
     'Model' / 'Operations' / 'OperationManager.vala',
+    'Model' / 'Operations' / 'RenameOperation.vala',
     'Model' / 'Operations' / 'TrashOperation.vala',
 ]
 

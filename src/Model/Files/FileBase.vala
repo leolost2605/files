@@ -3,6 +3,16 @@
  * SPDX-FileCopyrightText: 2025 Leonhard Kargl <leo.kargl@proton.me>
  */
 
+/**
+ * The base class for all files. All files are singletons i.e. multiple calls
+ * to {@link get_for_uri} will return the same object at any given time.
+ * This is the only way to obtain files. It automatically constructs the correct file
+ * (directory or document).
+ *
+ * A FileBase file is backed by a {@link GLib.File}. This file can change (e.g. when it's renamed).
+ * Some properties are always valid (like of course the file, uri and also basename) while some
+ * are only valid after the file has been loaded with {@link load}.
+ */
 public abstract class Files.FileBase : Object {
     private static HashTable<string, unowned FileBase> known_files;
 
@@ -59,19 +69,52 @@ public abstract class Files.FileBase : Object {
         }
     }
 
-    public string uri { get; construct; }
+    public signal void changed (File? old_file);
+
+    public Cancellable cancellable { get; construct; }
+
+    private File? _file;
+    /**
+     * The backing file of #this. It is strongly discouraged to use it directly since
+     * it can change during the lifetime of #this.
+     * It is only provided for occassions where it's really needed, e.g. when communicating
+     * with third parties (dnd, c&p) or doing operations. Instead you should use the properties of #this
+     * like {@link basename}, {@link uri}, {@link size}, etc.
+     */
+    public File file {
+        get { return _file; }
+        protected construct set {
+            if (_file != null) {
+                known_files.remove (uri);
+            }
+
+            var old_file = _file;
+            _file = value;
+
+            uri = _file.get_uri ();
+            basename = _file.get_basename ();
+
+            known_files[uri] = this;
+
+            changed (old_file);
+        }
+    }
+
+    public FileInfo info { protected get; protected construct set; }
+
+    // Properties of the file that are always valid. Note they may change during the lifetime of #this
+    public string uri { get; private set; }
     public string basename { get; private set; }
 
+    // Properties of the file that are only valid after it has been loaded
+
     /**
-     * A translated string representing the size of the file.
+     * A translated string representing the size of the file. Has to be loaded.
      */
-    public string size { get; private set; }
+    public string size { get; protected set; }
 
+    // Misc stuff
     public bool move_queued { get; set; default = false; }
-
-    public File file { get; construct; }
-    public FileInfo info { protected get; construct; }
-    public Cancellable cancellable { protected get; construct; }
 
     private uint loaded = 0;
     private uint unload_timeout_id = 0;
@@ -80,17 +123,15 @@ public abstract class Files.FileBase : Object {
 
     construct {
         cancellable = new Cancellable ();
-
-        uri = file.get_uri ();
-        basename = file.get_basename ();
-
-        known_files[uri] = this;
     }
 
     ~FileBase () {
         cancellable.cancel ();
         known_files.remove (uri);
     }
+
+    protected virtual async void load_internal () { }
+    protected virtual async void unload_internal () { }
 
     public void load () {
         if (unload_timeout_id != 0) {
@@ -122,9 +163,6 @@ public abstract class Files.FileBase : Object {
         return Source.REMOVE;
     }
 
-    protected virtual async void load_internal () { }
-    protected virtual async void unload_internal () { }
-
     public virtual Directory? open (Gtk.Window? parent) {
         return null;
     }
@@ -143,5 +181,26 @@ public abstract class Files.FileBase : Object {
         }
 
         return null;
+    }
+
+    public async void refresh () {
+        try {
+            info = yield file.query_info_async ("standard::*", NONE, Priority.DEFAULT, cancellable);
+        } catch (Error e) {
+            warning ("Error refreshing file info: %s", e.message);
+        }
+    }
+
+    /**
+     * This doesn't actually rename the file on disk. For that use
+     * {@link OperationManager.rename_files}
+     */
+    public void rename (File new_file) {
+        if (uri == new_file.get_uri ()) {
+            return;
+        }
+
+        file = new_file;
+        refresh.begin ();
     }
 }
