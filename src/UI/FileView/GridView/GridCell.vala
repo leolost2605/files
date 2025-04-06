@@ -3,7 +3,7 @@
  * SPDX-FileCopyrightText: 2025 Leonhard Kargl <leo.kargl@proton.me>
  */
 
-public class Files.GridCell : Granite.Bin {
+public class Files.GridCell : CellBase {
     private Binding? binding;
 
     private Gtk.Label label;
@@ -13,11 +13,11 @@ public class Files.GridCell : Granite.Bin {
         child = label;
     }
 
-    public void bind (FileBase file) {
+    public override void bind (FileBase file) {
         binding = file.bind_property ("basename", label, "label", SYNC_CREATE);
     }
 
-    public void unbind () {
+    public override void unbind () {
         binding.unbind ();
     }
 }

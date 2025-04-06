@@ -3,6 +3,7 @@ sources = [
     'UI' / 'HeaderBar.vala',
     'UI' / 'MainWindow.vala',
     'UI' / 'Dialogs' / 'RenameDialog.vala',
+    'UI' / 'FileView' / 'CellBase.vala',
     'UI' / 'FileView' / 'FileView.vala',
     'UI' / 'FileView' / 'GridView' / 'GridCell.vala',
     'UI' / 'FileView' / 'GridView' / 'GridView.vala',

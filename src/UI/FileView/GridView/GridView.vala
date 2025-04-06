@@ -13,8 +13,8 @@ public class Files.GridView : Granite.Bin {
     construct {
         var factory = new Gtk.SignalListItemFactory ();
         factory.setup.connect (setup_cell);
-        factory.bind.connect (bind_cell);
-        factory.unbind.connect (unbind_cell);
+        factory.bind.connect (CellBase.bind_func);
+        factory.unbind.connect (CellBase.unbind_func);
 
         var grid_view = new Gtk.GridView (selection_model, factory);
 
@@ -27,26 +27,8 @@ public class Files.GridView : Granite.Bin {
 
     private void setup_cell (Object obj) {
         var item = (Gtk.ListItem) obj;
-        item.child = new GridCell ();
-    }
-
-    private void bind_cell (Object obj) {
-        var item = (Gtk.ListItem) obj;
-
-        var file = (FileBase) item.item;
-        file.load ();
-
-        var cell = (GridCell) item.child;
-        cell.bind (file);
-    }
-
-    private void unbind_cell (Object obj) {
-        var item = (Gtk.ListItem) obj;
-
-        var file = (FileBase) item.item;
-        file.queue_unload ();
-
-        var cell = (GridCell) item.child;
-        cell.unbind ();
+        var cell = new GridCell ();
+        cell.do_common_setup (item);
+        item.child = cell;
     }
 }

@@ -3,7 +3,7 @@
  * SPDX-FileCopyrightText: 2025 Leonhard Kargl <leo.kargl@proton.me>
  */
 
-public class Files.FileCell : Granite.Bin {
+public class Files.FileCell : CellBase {
     public CellType cell_type { get; construct; }
 
     private Binding? binding;
@@ -26,7 +26,7 @@ public class Files.FileCell : Granite.Bin {
         child = label;
     }
 
-    public void bind (FileBase file) {
+    public override void bind (FileBase file) {
         switch (cell_type) {
             case CellType.NAME:
                 binding = file.bind_property ("basename", label, "label", SYNC_CREATE);
@@ -37,7 +37,7 @@ public class Files.FileCell : Granite.Bin {
         }
     }
 
-    public void unbind () {
+    public override void unbind () {
         binding.unbind ();
     }
 }

@@ -52,8 +52,8 @@ public class Files.ListView : Granite.Bin {
     construct {
         var name_factory = new Gtk.SignalListItemFactory ();
         name_factory.setup.connect (setup_name_cell);
-        name_factory.bind.connect (bind_cell);
-        name_factory.unbind.connect (unbind_cell);
+        name_factory.bind.connect (CellBase.bind_func);
+        name_factory.unbind.connect (CellBase.unbind_func);
 
         var name_sorter = new Gtk.StringSorter (new Gtk.PropertyExpression (typeof (FileBase), null, "basename")) {
             ignore_case = true,
@@ -68,8 +68,8 @@ public class Files.ListView : Granite.Bin {
 
         var size_factory = new Gtk.SignalListItemFactory ();
         size_factory.setup.connect (setup_size_cell);
-        size_factory.bind.connect (bind_cell);
-        size_factory.unbind.connect (unbind_cell);
+        size_factory.bind.connect (CellBase.bind_func);
+        size_factory.unbind.connect (CellBase.unbind_func);
 
         var size_sorter = new Gtk.NumericSorter (new Gtk.PropertyExpression (typeof (FileBase), null, "size"));
 
@@ -134,32 +134,16 @@ public class Files.ListView : Granite.Bin {
 
     private void setup_name_cell (Object obj) {
         var item = (Gtk.ListItem) obj;
-        item.child = new FileCell (NAME);
+        var cell = new FileCell (NAME);
+        cell.do_common_setup (item);
+        item.child = cell;
     }
 
     private void setup_size_cell (Object obj) {
         var item = (Gtk.ListItem) obj;
-        item.child = new FileCell (SIZE);
-    }
-
-    private void bind_cell (Object obj) {
-        var item = (Gtk.ListItem) obj;
-
-        var file = (FileBase) item.item;
-        file.load ();
-
-        var cell = (FileCell) item.child;
-        cell.bind (file);
-    }
-
-    private void unbind_cell (Object obj) {
-        var item = (Gtk.ListItem) obj;
-
-        var file = (FileBase) item.item;
-        file.queue_unload ();
-
-        var cell = (FileCell) item.child;
-        cell.unbind ();
+        var cell = new FileCell (SIZE);
+        cell.do_common_setup (item);
+        item.child = cell;
     }
 
     private void on_activate (uint position) {

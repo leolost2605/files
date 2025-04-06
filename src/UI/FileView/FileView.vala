@@ -304,6 +304,12 @@ public class Files.FileView : Granite.Bin {
     }
 
     private void on_secondary_click (double x, double y) {
+        var cell = (CellBase) pick (x, y, DEFAULT).get_ancestor (typeof (CellBase));
+
+        if (cell != null && !(cell.position in selection_model.get_selection ())) {
+            selection_model.select_item (cell.position, true);
+        }
+
         context_menu.menu_model = build_menu ();
         context_menu.pointing_to = { (int) x, (int) y, 0, 0 };
         context_menu.popup ();
