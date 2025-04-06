@@ -73,8 +73,11 @@ public class Files.ListView : Granite.Bin {
         size_factory.bind.connect (bind_cell);
         size_factory.unbind.connect (unbind_cell);
 
+        var size_sorter = new Gtk.NumericSorter (new Gtk.PropertyExpression (typeof (FileBase), null, "size"));
+
         size_column = new Gtk.ColumnViewColumn (_("Size"), size_factory) {
             resizable = true,
+            sorter = size_sorter
         };
         list_view_settings.bind ("size-width", size_column, "fixed-width", DEFAULT);
 
