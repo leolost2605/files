@@ -49,6 +49,28 @@ public class Files.HeaderBar : Granite.Bin {
         toggles.append (list_view_toggle);
         toggles.append (grid_view_toggle);
 
+        var sort_key_section = new Menu ();
+        var name_action = Action.print_detailed_name (MainWindow.ACTION_PREFIX + MainWindow.ACTION_SORT_KEY, new Variant.int32 (CellType.NAME));
+        sort_key_section.append (_("Name"), name_action);
+        var size_action = Action.print_detailed_name (MainWindow.ACTION_PREFIX + MainWindow.ACTION_SORT_KEY, new Variant.int32 (CellType.SIZE));
+        sort_key_section.append (_("Size"), size_action);
+
+        var sort_direction_section = new Menu ();
+        var ascending_action = Action.print_detailed_name (MainWindow.ACTION_PREFIX + MainWindow.ACTION_SORT_DIRECTION, new Variant.int32 (Gtk.SortType.ASCENDING));
+        sort_direction_section.append (_("Ascending"), ascending_action);
+        var descending_action = Action.print_detailed_name (MainWindow.ACTION_PREFIX + MainWindow.ACTION_SORT_DIRECTION, new Variant.int32 (Gtk.SortType.DESCENDING));
+        sort_direction_section.append (_("Descending"), descending_action);
+
+        var sort_menu = new Menu ();
+        sort_menu.append_section (null, sort_key_section);
+        sort_menu.append_section (null, sort_direction_section);
+
+        var sort_popover = new Gtk.PopoverMenu.from_model (sort_menu);
+
+        var sort_button = new Gtk.MenuButton () {
+            popover = sort_popover
+        };
+
         var header_bar = new Gtk.HeaderBar () {
             show_title_buttons = false,
             title_widget = path_entry
@@ -57,6 +79,7 @@ public class Files.HeaderBar : Granite.Bin {
         header_bar.pack_start (back);
         header_bar.pack_start (forward);
         header_bar.pack_end (new Gtk.WindowControls (Gtk.PackType.END));
+        header_bar.pack_end (sort_button);
         header_bar.pack_end (toggles);
 
         child = header_bar;

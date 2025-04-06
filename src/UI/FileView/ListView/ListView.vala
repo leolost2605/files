@@ -10,7 +10,7 @@ public class Files.ListView : Granite.Bin {
 
     public Gtk.MultiSelection selection_model { get; construct; }
 
-    public CellType sort_key {
+    private CellType sort_key {
         get {
             if (sorter.primary_sort_column == name_column) {
                 return NAME;
@@ -33,7 +33,7 @@ public class Files.ListView : Granite.Bin {
         }
     }
 
-    public Gtk.SortType sort_direction {
+    private Gtk.SortType sort_direction {
         get { return sorter.primary_sort_order; }
         set { column_view.sort_by_column (sorter.primary_sort_column, value); }
     }
@@ -97,18 +97,38 @@ public class Files.ListView : Granite.Bin {
         hexpand = true;
         vexpand = true;
 
-        sorter.notify["primary-sort-column"].connect (on_primary_sort_column_changed);
-        sorter.notify["primary-sort-order"].connect (on_primary_sort_order_changed);
+        sorter.notify["primary-sort-column"].connect (update_action_state);
+        sorter.notify["primary-sort-order"].connect (update_action_state);
 
         column_view.activate.connect (on_activate);
     }
 
-    private void on_primary_sort_column_changed () {
-        notify_property ("sort-key");
+    public void start_listen () {
+        var action_group = (ActionGroup) get_ancestor (typeof (ActionGroup));
+        action_group.action_state_changed.connect (on_action_state_changed);
     }
 
-    private void on_primary_sort_order_changed () {
-        notify_property ("sort-direction");
+    public void end_listen () {
+        var action_group = (ActionGroup) get_ancestor (typeof (ActionGroup));
+        action_group.action_state_changed.disconnect (on_action_state_changed);
+    }
+
+    private void on_action_state_changed (string action_name, Variant state) {
+        switch (action_name) {
+            case MainWindow.ACTION_SORT_KEY:
+                sort_key = (CellType) state.get_int32 ();
+                break;
+
+            case MainWindow.ACTION_SORT_DIRECTION:
+                sort_direction = (Gtk.SortType) state.get_int32 ();
+                break;
+        }
+    }
+
+    private void update_action_state () {
+        var action_group = (ActionGroup) get_ancestor (typeof (ActionGroup));
+        action_group.change_action_state (MainWindow.ACTION_SORT_KEY, (int) sort_key);
+        action_group.change_action_state (MainWindow.ACTION_SORT_DIRECTION, (int) sort_direction);
     }
 
     private void setup_name_cell (Object obj) {

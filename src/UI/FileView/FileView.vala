@@ -117,6 +117,7 @@ public class Files.FileView : Granite.Bin {
         child = stack;
 
         map.connect (on_map);
+        unmap.connect (on_unmap);
 
         list_view.file_activated.connect (on_file_activated);
     }
@@ -131,14 +132,16 @@ public class Files.FileView : Granite.Bin {
 
         var action_group = (ActionGroup) get_ancestor (typeof (ActionGroup));
 
-        if (action_group == null) {
-            warning ("No parent action group found");
-            return;
+        if (action_group != null) {
+            action_group.change_action_state (MainWindow.ACTION_VIEW_TYPE, (int) view_type);
         }
 
-        action_group.change_action_state (MainWindow.ACTION_VIEW_TYPE, (int) view_type);
-
+        list_view.start_listen ();
         sync_history_actions ();
+    }
+
+    private void on_unmap () {
+        list_view.end_listen ();
     }
 
     private void sync_history_actions () {
