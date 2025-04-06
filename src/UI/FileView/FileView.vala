@@ -3,6 +3,13 @@
  * SPDX-FileCopyrightText: 2025 Leonhard Kargl <leo.kargl@proton.me>
  */
 
+public enum Files.OpenHint {
+    NONE,
+    CHOOSE,
+    NEW_TAB,
+    NEW_WINDOW,
+}
+
 public enum Files.CellType {
     NAME,
     SIZE,
@@ -96,6 +103,8 @@ public class Files.FileView : Granite.Bin {
 
     private Gtk.Stack stack;
 
+    private Gtk.PopoverMenu context_menu;
+
     construct {
         history = new Gee.ArrayList<Directory> ();
 
@@ -120,8 +129,6 @@ public class Files.FileView : Granite.Bin {
 
         map.connect (on_map);
         unmap.connect (on_unmap);
-
-        list_view.file_activated.connect (on_file_activated);
 
         settings.bind_with_mapping ("show-hidden-files", filter_model, "filter", GET, (val, variant, user_data) => {
             if ((bool) variant) {
@@ -148,6 +155,22 @@ public class Files.FileView : Granite.Bin {
             }
             return true;
         }, () => {}, null, null);
+
+        context_menu = new Gtk.PopoverMenu.from_model (new Menu ()) {
+            has_arrow = false,
+            halign = START
+        };
+        context_menu.set_parent (this);
+
+        var gesture_click = new Gtk.GestureClick () {
+            button = Gdk.BUTTON_SECONDARY
+        };
+        add_controller (gesture_click);
+        gesture_click.pressed.connect ((n_press, x, y) => on_secondary_click (x, y));
+
+        var long_press = new Gtk.GestureLongPress ();
+        add_controller (long_press);
+        long_press.pressed.connect (on_secondary_click);
     }
 
     private void on_map () {
@@ -181,14 +204,6 @@ public class Files.FileView : Granite.Bin {
 
             back.set_enabled (current_index > 0);
             forward.set_enabled (current_index < history.size - 1);
-        }
-    }
-
-    private void on_file_activated (FileBase file) {
-        var dir = file.open ((Gtk.Window) get_root ());
-
-        if (dir != null) {
-            activate_action_variant (MainWindow.ACTION_PREFIX + MainWindow.ACTION_GOTO, dir.uri);
         }
     }
 
@@ -272,5 +287,69 @@ public class Files.FileView : Granite.Bin {
         } else {
             warning ("Renaming multiple files is not supported yet");
         }
+    }
+
+    public void open (OpenHint hint) {
+        var selection = selection_model.get_selection ();
+
+        //TODO: Multiple directories selected will cause us to open only the last one.
+        for (int i = 0; i < selection.get_size (); i++) {
+            var file = (FileBase) selection_model.get_item (selection.get_nth (i));
+            var dir = file.open ((Gtk.Window) get_root (), hint == CHOOSE);
+
+            if (dir != null) {
+                activate_action_variant (MainWindow.ACTION_PREFIX + MainWindow.ACTION_GOTO, dir.uri);
+            }
+        }
+    }
+
+    private void on_secondary_click (double x, double y) {
+        context_menu.menu_model = build_menu ();
+        context_menu.pointing_to = { (int) x, (int) y, 0, 0 };
+        context_menu.popup ();
+    }
+
+    private Menu build_menu () {
+        var selection = selection_model.get_selection ();
+
+        var menu = new Menu ();
+
+        if (selection.get_size () == 1) {
+            var item = (FileBase) selection_model.get_item (selection.get_nth (0));
+
+            var open_section = new Menu ();
+
+            if (item is Document) {
+                open_section.append (
+                    _("Open with <Insert default here>"),
+                    Action.print_detailed_name (MainWindow.ACTION_PREFIX + MainWindow.ACTION_OPEN, OpenHint.NONE)
+                );
+                open_section.append (
+                    _("Open with…"),
+                    Action.print_detailed_name (MainWindow.ACTION_PREFIX + MainWindow.ACTION_OPEN, OpenHint.CHOOSE)
+                );
+            } else {
+                open_section.append (
+                    _("Open"),
+                    Action.print_detailed_name (MainWindow.ACTION_PREFIX + MainWindow.ACTION_OPEN, OpenHint.NONE)
+                );
+            }
+
+            menu.append_section (null, open_section);
+        }
+
+        var edit_section = new Menu ();
+        edit_section.append (_("Copy"), MainWindow.ACTION_PREFIX + MainWindow.ACTION_COPY);
+        edit_section.append (_("Cut"), MainWindow.ACTION_PREFIX + MainWindow.ACTION_CUT);
+        edit_section.append (_("Rename"), MainWindow.ACTION_PREFIX + MainWindow.ACTION_RENAME);
+
+        menu.append_section (null, edit_section);
+
+        var destructive_action = new Menu ();
+        destructive_action.append (_("Move to Trash"), MainWindow.ACTION_PREFIX + MainWindow.ACTION_TRASH);
+
+        menu.append_section (null, destructive_action);
+
+        return menu;
     }
 }

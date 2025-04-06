@@ -18,6 +18,7 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
     public const string ACTION_RENAME = "rename";
     public const string ACTION_SORT_KEY = "sort-key";
     public const string ACTION_SORT_DIRECTION = "sort-direction";
+    public const string ACTION_OPEN = "open";
 
     private const ActionEntry[] ACTION_ENTRIES = {
         {ACTION_COPY, on_copy },
@@ -32,6 +33,7 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
         {ACTION_RENAME, on_rename },
         {ACTION_SORT_KEY, null, "i" , "0", on_sort_key_changed },
         {ACTION_SORT_DIRECTION, null, "i" , "0", on_sort_direction_changed },
+        {ACTION_OPEN, on_open, "i" },
     };
 
     public Directory? directory {
@@ -185,5 +187,9 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
 
     private void on_sort_direction_changed (SimpleAction action, Variant sort_direction) {
         action.set_state (sort_direction);
+    }
+
+    private void on_open (SimpleAction action, Variant? param) {
+        selected_view.open ((OpenHint) param.get_int32 ());
     }
 }

@@ -82,7 +82,7 @@ public class Files.Directory : FileBase {
         children.remove_all ();
     }
 
-    public override Directory? open (Gtk.Window? parent) {
+    public override Directory? open (Gtk.Window? parent, bool allow_choose) {
         return this;
     }
 }

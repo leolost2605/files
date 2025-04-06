@@ -173,7 +173,7 @@ public abstract class Files.FileBase : Object {
         return Source.REMOVE;
     }
 
-    public virtual Directory? open (Gtk.Window? parent) {
+    public virtual Directory? open (Gtk.Window? parent, bool allow_choose) {
         return null;
     }
 

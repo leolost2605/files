@@ -6,8 +6,6 @@
 public class Files.ListView : Granite.Bin {
     private static Settings list_view_settings = new Settings ("io.github.leolost2605.files.list-view");
 
-    public signal void file_activated (FileBase file);
-
     public Gtk.MultiSelection selection_model { get; construct; }
 
     private CellType sort_key {
@@ -165,7 +163,6 @@ public class Files.ListView : Granite.Bin {
     }
 
     private void on_activate (uint position) {
-        var file = (FileBase) selection_model.get_item (position);
-        file_activated (file);
+        activate_action_variant (MainWindow.ACTION_PREFIX + MainWindow.ACTION_OPEN, OpenHint.NONE);
     }
 }

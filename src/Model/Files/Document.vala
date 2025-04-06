@@ -13,14 +13,14 @@ public class Files.Document : FileBase {
         display_size = GLib.format_size (size, DEFAULT);
     }
 
-    public override Directory? open (Gtk.Window? parent) {
-        launch.begin (parent);
+    public override Directory? open (Gtk.Window? parent, bool allow_choose) {
+        launch.begin (parent, allow_choose);
         return null;
     }
 
-    private async void launch (Gtk.Window? parent) {
+    private async void launch (Gtk.Window? parent, bool allow_choose) {
         var file_launcher = new Gtk.FileLauncher (file) {
-            always_ask = false
+            always_ask = allow_choose
         };
 
         try {
