@@ -54,6 +54,7 @@ public class Files.ListView : Granite.Bin {
         column_view = new Gtk.ColumnView (selection_model) {
             hexpand = true,
             vexpand = true,
+            enable_rubberband = true,
         };
         column_view.append_column (name_column);
         column_view.append_column (size_column);

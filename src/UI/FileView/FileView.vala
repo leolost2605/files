@@ -96,7 +96,9 @@ public class Files.FileView : Granite.Bin {
         add_controller (gesture_click);
         gesture_click.pressed.connect ((n_press, x, y) => on_secondary_click (x, y));
 
-        var long_press = new Gtk.GestureLongPress ();
+        var long_press = new Gtk.GestureLongPress () {
+            touch_only = true,
+        };
         add_controller (long_press);
         long_press.pressed.connect (on_secondary_click);
     }
