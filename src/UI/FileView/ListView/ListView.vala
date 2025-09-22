@@ -77,6 +77,8 @@ public class Files.ListView : Granite.Bin {
         state.notify["sort-key"].connect (update_sorting);
         state.notify["sort-direction"].connect (update_sorting);
 
+        update_sorting ();
+
         column_view.activate.connect (on_activate);
     }
 

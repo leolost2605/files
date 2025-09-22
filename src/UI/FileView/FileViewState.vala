@@ -50,9 +50,9 @@ public class Files.FileViewState : Object {
         }
     }
 
-    public ViewType view_type { get; set; }
-    public CellType sort_key { get; set; }
-    public Gtk.SortType sort_direction { get; set; }
+    public ViewType view_type { get; set; default = LIST; }
+    public CellType sort_key { get; set; default = NAME; }
+    public Gtk.SortType sort_direction { get; set; default = ASCENDING; }
 
     public Gee.List<Action> actions { get; construct; }
 
