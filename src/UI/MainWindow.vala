@@ -67,13 +67,9 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
         toolbar_view.add_top_bar (end_header);
         toolbar_view.add_top_bar (tab_bar);
 
-        var paned = new Gtk.Paned (HORIZONTAL) {
-            position = 275,
-            start_child = new SideBar (),
-            end_child = toolbar_view,
-            resize_start_child = false,
-            shrink_end_child = false,
-            shrink_start_child = false
+        var split_view = new Adw.NavigationSplitView () {
+            sidebar = new Adw.NavigationPage (new SideBar (), _("Sidebar")),
+            content = new Adw.NavigationPage (toolbar_view, _("Files"))
         };
 
         var null_title = new Gtk.Grid () {
@@ -81,7 +77,7 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
         };
 
         titlebar = null_title;
-        child = paned;
+        child = split_view;
     }
 
     private void on_selected_tab_changed () {
