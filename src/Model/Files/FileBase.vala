@@ -121,6 +121,7 @@ public abstract class Files.FileBase : Object {
      */
     public string display_size { get; protected set; }
     public int64 size { get; protected set; default = 0; }
+    public Icon icon { get; protected set; default = new ThemedIcon ("text-x-preview"); }
 
     // Misc stuff
     public bool move_queued { get; set; default = false; }
