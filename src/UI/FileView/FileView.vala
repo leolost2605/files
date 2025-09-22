@@ -87,6 +87,12 @@ public class Files.FileView : Granite.Bin {
             return true;
         }, () => {}, null, null);
 
+        var gesture_click_middle = new Gtk.GestureClick () {
+            button = Gdk.BUTTON_MIDDLE
+        };
+        add_controller (gesture_click_middle);
+        gesture_click_middle.pressed.connect ((n_press, x, y) => on_middle_click (x, y));
+
         context_menu = new Gtk.PopoverMenu.from_model (new Menu ()) {
             has_arrow = false,
             halign = START
@@ -128,6 +134,20 @@ public class Files.FileView : Granite.Bin {
 
     public void open (OpenHint hint) {
         operation_manager.open ((Gtk.Window) root, hint);
+    }
+
+    private void on_middle_click (double x, double y) {
+        var cell = (CellBase) pick (x, y, DEFAULT).get_ancestor (typeof (CellBase));
+
+        if (cell == null) {
+            return;
+        }
+
+        var file = (FileBase) selection_model.get_item (cell.position);
+        activate_action_variant (
+            MainWindow.ACTION_PREFIX + MainWindow.ACTION_NEW_TAB,
+            new Variant.maybe (null, new Variant.string (file.uri))
+        );
     }
 
     private void on_secondary_click (double x, double y) {
@@ -198,6 +218,13 @@ public class Files.FileView : Granite.Bin {
             open_section.append (
                 _("Open"),
                 Action.print_detailed_name (MainWindow.ACTION_PREFIX + MainWindow.ACTION_OPEN, OpenHint.NONE)
+            );
+            open_section.append (
+                _("Open in New Tab"),
+                Action.print_detailed_name (
+                    MainWindow.ACTION_PREFIX + MainWindow.ACTION_NEW_TAB,
+                    new Variant.maybe (null, new Variant.string (item.uri))
+                )
             );
         }
 

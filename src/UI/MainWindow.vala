@@ -20,7 +20,7 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
         {ACTION_CUT, on_cut },
         {ACTION_PASTE, on_paste },
         {ACTION_TRASH, on_trash },
-        {ACTION_NEW_TAB, on_new_tab, },
+        {ACTION_NEW_TAB, on_new_tab, "ms" },
         {ACTION_RENAME, on_rename },
         {ACTION_OPEN, on_open, "i" },
         {ACTION_NEW_FOLDER, on_new_folder },
@@ -53,7 +53,12 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
         application.set_accels_for_action (ACTION_PREFIX + ACTION_CUT, {"<Ctrl>x"});
         application.set_accels_for_action (ACTION_PREFIX + ACTION_PASTE, {"<Ctrl>v"});
         application.set_accels_for_action (ACTION_PREFIX + ACTION_TRASH, {"Del"});
-        application.set_accels_for_action (ACTION_PREFIX + ACTION_NEW_TAB, {"<Ctrl>t"});
+
+        var tab_action_name = Action.print_detailed_name (
+            ACTION_PREFIX + ACTION_NEW_TAB, new Variant.maybe (VariantType.STRING, null)
+        );
+
+        application.set_accels_for_action (tab_action_name, {"<Ctrl>t"});
         application.set_accels_for_action (ACTION_PREFIX + ACTION_RENAME, {"F2"});
 
         end_header = new HeaderBar ();
@@ -86,7 +91,7 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
         action_added.connect (on_action_added);
         action_state_changed.connect (on_action_state_changed);
 
-        on_new_tab ();
+        add_new_tab (null);
     }
 
     private void on_selected_tab_changed () {
@@ -113,7 +118,11 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
         selected_view.trash ();
     }
 
-    private void on_new_tab () {
+    private void on_new_tab (SimpleAction action, Variant? param) {
+        add_new_tab (param.get_maybe ()?.get_string ());
+    }
+
+    private void add_new_tab (string? uri) {
         var state = new FileViewState ();
         var file_view = new FileView (state);
         var page = tab_view.append (file_view);
@@ -130,12 +139,8 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
 
         tab_view.selected_page = page;
 
-        try {
-            var home_uri = Filename.to_uri (Environment.get_home_dir (), null);
-            activate_action_variant (MainWindow.ACTION_PREFIX + FileViewState.ACTION_LOCATION, home_uri);
-        } catch (Error e) {
-            warning ("Error converting path to URI: %s", e.message);
-        }
+        var location = uri ?? File.new_for_path (Environment.get_home_dir ()).get_uri ();
+        activate_action_variant (MainWindow.ACTION_PREFIX + FileViewState.ACTION_LOCATION, location);
     }
 
     private void on_rename () {
