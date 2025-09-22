@@ -15,30 +15,27 @@ public class Files.FileViewOperationManager : Object {
     public FileViewState state { get; construct; }
     public Gtk.SelectionModel selection_model { get; construct; }
 
-    private Gee.Collection<string>? select_when_appears = null;
-    private bool is_select_when_appears_change = false;
+    private Gee.HashSet<string> select_when_appears;
 
     public FileViewOperationManager (FileViewState state, Gtk.SelectionModel selection_model) {
         Object (state: state, selection_model: selection_model);
     }
 
     construct {
+        select_when_appears = new Gee.HashSet<string> ();
+
         selection_model.items_changed.connect_after (on_items_changed);
         selection_model.selection_changed.connect (on_selection_changed);
     }
 
     private void on_items_changed (uint pos, uint n_removed, uint n_added) {
-        if (select_when_appears == null) {
-            return;
-        }
-
         for (uint i = pos; i < pos + n_added; i++) {
             var file = (FileBase) selection_model.get_item (i);
 
             if (file.uri in select_when_appears) {
-                is_select_when_appears_change = true;
+                selection_model.selection_changed.disconnect (on_selection_changed);
                 selection_model.select_item (i, false);
-                is_select_when_appears_change = false;
+                selection_model.selection_changed.connect (on_selection_changed);
 
                 select_when_appears.remove (file.uri);
             }
@@ -46,19 +43,15 @@ public class Files.FileViewOperationManager : Object {
     }
 
     private void on_selection_changed () {
-        if (is_select_when_appears_change) {
-            return;
-        }
-
         // If the selection changed for other reasons (e.g. user input)
         // reset any queued "select when appears"
-        select_when_appears = null;
+        select_when_appears.clear ();
     }
 
     private void push_operation (Operation operation) {
         selection_model.unselect_all ();
 
-        select_when_appears = new Gee.LinkedList<string> ();
+        select_when_appears.clear ();
         foreach (var info in operation.infos) {
             var uri = operation.calculate_resulting_uri (info);
 
