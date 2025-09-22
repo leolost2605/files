@@ -61,16 +61,16 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
             view = tab_view
         };
 
-        var end_box = new Gtk.Box (VERTICAL, 0);
-        end_box.add_css_class (Granite.STYLE_CLASS_VIEW);
-        end_box.append (end_header);
-        end_box.append (tab_bar);
-        end_box.append (tab_view);
+        var toolbar_view = new Adw.ToolbarView () {
+            content = tab_view
+        };
+        toolbar_view.add_top_bar (end_header);
+        toolbar_view.add_top_bar (tab_bar);
 
         var paned = new Gtk.Paned (HORIZONTAL) {
             position = 275,
             start_child = new SideBar (),
-            end_child = end_box,
+            end_child = toolbar_view,
             resize_start_child = false,
             shrink_end_child = false,
             shrink_start_child = false
