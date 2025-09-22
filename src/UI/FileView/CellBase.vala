@@ -6,6 +6,8 @@
 public abstract class Files.CellBase : Granite.Bin {
     public uint position { get; set; }
 
+    private Binding? sensitive_binding;
+
     public abstract void bind (FileBase file);
     public abstract void unbind ();
 
@@ -13,13 +15,24 @@ public abstract class Files.CellBase : Granite.Bin {
         item.bind_property ("position", this, "position", SYNC_CREATE);
     }
 
+    private void bind_common (FileBase file) {
+        file.load ();
+        file.bind_property ("move-queued", this, "sensitive", SYNC_CREATE | INVERT_BOOLEAN);
+    }
+
+    private void unbind_common (FileBase file) {
+        file.queue_unload ();
+        sensitive_binding?.unbind ();
+        sensitive_binding = null;
+    }
+
     public static void bind_func (Object obj) {
         var item = (Gtk.ListItem) obj;
 
         var file = (FileBase) item.item;
-        file.load ();
 
         var cell = (CellBase) item.child;
+        cell.bind_common (file);
         cell.bind (file);
     }
 
@@ -27,9 +40,9 @@ public abstract class Files.CellBase : Granite.Bin {
         var item = (Gtk.ListItem) obj;
 
         var file = (FileBase) item.item;
-        file.queue_unload ();
 
         var cell = (CellBase) item.child;
+        cell.unbind_common (file);
         cell.unbind ();
     }
 }
