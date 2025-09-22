@@ -43,6 +43,10 @@ public abstract class Files.Operation : Object {
         cancellable = new Cancellable ();
     }
 
+    public virtual string? calculate_resulting_uri (OperationInfo info) {
+        return null;
+    }
+
     public void start () {
         run.begin ();
     }

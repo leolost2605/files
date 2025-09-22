@@ -24,6 +24,7 @@ public class Files.FileView : Granite.Bin {
     public FileViewState state { get; construct; }
 
     private Gtk.MultiSelection selection_model;
+    private FileViewOperationManager operation_manager;
 
     private Gtk.PopoverMenu context_menu;
 
@@ -41,6 +42,8 @@ public class Files.FileView : Granite.Bin {
 
         var sort_model = new Gtk.SortListModel (filter_model, null);
         selection_model = new Gtk.MultiSelection (sort_model);
+
+        operation_manager = new FileViewOperationManager (state, selection_model);
 
         // The ListView is our "master" view for sorting since it handles it via the column view
         Gtk.Sorter sorter;
@@ -104,89 +107,35 @@ public class Files.FileView : Granite.Bin {
     }
 
     public void copy (bool move) {
-        var selection = selection_model.get_selection ();
-
-        File[] files = new File[selection.get_size ()];
-        for (int i = 0; i < selection.get_size (); i++) {
-            var base_file = (FileBase) selection_model.get_item (selection.get_nth (i));
-            files[i] = base_file.file;
-            base_file.move_queued = move;
-        }
-
-        var file_list = new Gdk.FileList.from_array (files);
-        var content_provider = new Gdk.ContentProvider.for_value (file_list);
-
-        parent.root.get_surface ().display.get_clipboard ().set_content (content_provider);
+        operation_manager.copy (root, move);
     }
 
-    public async void paste () {
-        var clipboard = parent.root.get_surface ().display.get_clipboard ();
-
-        Gdk.FileList file_list;
-        try {
-            var val = yield clipboard.read_value_async (typeof (Gdk.FileList), Priority.DEFAULT, null);
-
-            if (val == null) {
-                return;
-            }
-
-            file_list = (Gdk.FileList) val.get_boxed ();
-        } catch (Error e) {
-            warning ("Failed to read clipboard: %s", e.message);
-            return;
-        }
-
-        var files = file_list.get_files ();
-        string[] uris = {};
-        foreach (var file in files) {
-            uris += file.get_uri ();
-        }
-
-        unowned var manager = OperationManager.get_instance ();
-        manager.paste_files.begin (uris, state.directory.uri);
+    public void paste () {
+        operation_manager.paste.begin (root);
     }
 
     public void trash () {
-        var selection = selection_model.get_selection ();
-
-        string[] files = new string[selection.get_size ()];
-        for (int i = 0; i < selection.get_size (); i++) {
-            var base_file = (FileBase) selection_model.get_item (selection.get_nth (i));
-            files[i] = base_file.uri;
-        }
-
-        OperationManager.get_instance ().push_operation (new TrashOperation (files));
+        operation_manager.trash ();
     }
 
     public void rename () {
-        var selection = selection_model.get_selection ();
+        operation_manager.rename ((Gtk.Window) root);
+    }
 
-        if (selection.get_size () == 1) {
-            var base_file = (FileBase) selection_model.get_item (selection.get_nth (0));
-            new RenameDialog (base_file).present ();
-        } else {
-            warning ("Renaming multiple files is not supported yet");
-        }
+    public void create_new_folder () {
+        operation_manager.create_new_folder ((Gtk.Window) root);
     }
 
     public void open (OpenHint hint) {
-        var selection = selection_model.get_selection ();
-
-        //TODO: Multiple directories selected will cause us to open only the last one.
-        for (int i = 0; i < selection.get_size (); i++) {
-            var file = (FileBase) selection_model.get_item (selection.get_nth (i));
-            var dir = file.open ((Gtk.Window) get_root (), hint == CHOOSE);
-
-            if (dir != null) {
-                state.directory = dir;
-            }
-        }
+        operation_manager.open ((Gtk.Window) root, hint);
     }
 
     private void on_secondary_click (double x, double y) {
         var cell = (CellBase) pick (x, y, DEFAULT).get_ancestor (typeof (CellBase));
 
-        if (cell != null && !(cell.position in selection_model.get_selection ())) {
+        if (cell == null) {
+            selection_model.unselect_all ();
+        } else if (!(cell.position in selection_model.get_selection ())) {
             selection_model.select_item (cell.position, true);
         }
 
@@ -196,46 +145,76 @@ public class Files.FileView : Granite.Bin {
     }
 
     private Menu build_menu () {
-        var selection = selection_model.get_selection ();
+        var selection_size = selection_model.get_selection ().get_size ();
 
         var menu = new Menu ();
 
-        if (selection.get_size () == 1) {
-            var item = (FileBase) selection_model.get_item (selection.get_nth (0));
+        menu.append_section (null, build_new_section (selection_size));
+        menu.append_section (null, build_open_section (selection_size));
+        menu.append_section (null, build_edit_section (selection_size));
 
-            var open_section = new Menu ();
+        if (selection_size > 0) {
+            var destructive_section = new Menu ();
+            destructive_section.append (_("Move to Trash"), MainWindow.ACTION_PREFIX + MainWindow.ACTION_TRASH);
 
-            if (item is Document) {
-                open_section.append (
-                    _("Open with <Insert default here>"),
-                    Action.print_detailed_name (MainWindow.ACTION_PREFIX + MainWindow.ACTION_OPEN, OpenHint.NONE)
-                );
-                open_section.append (
-                    _("Open with…"),
-                    Action.print_detailed_name (MainWindow.ACTION_PREFIX + MainWindow.ACTION_OPEN, OpenHint.CHOOSE)
-                );
-            } else {
-                open_section.append (
-                    _("Open"),
-                    Action.print_detailed_name (MainWindow.ACTION_PREFIX + MainWindow.ACTION_OPEN, OpenHint.NONE)
-                );
-            }
-
-            menu.append_section (null, open_section);
+            menu.append_section (null, destructive_section);
         }
 
-        var edit_section = new Menu ();
-        edit_section.append (_("Copy"), MainWindow.ACTION_PREFIX + MainWindow.ACTION_COPY);
-        edit_section.append (_("Cut"), MainWindow.ACTION_PREFIX + MainWindow.ACTION_CUT);
-        edit_section.append (_("Rename"), MainWindow.ACTION_PREFIX + MainWindow.ACTION_RENAME);
-
-        menu.append_section (null, edit_section);
-
-        var destructive_action = new Menu ();
-        destructive_action.append (_("Move to Trash"), MainWindow.ACTION_PREFIX + MainWindow.ACTION_TRASH);
-
-        menu.append_section (null, destructive_action);
-
         return menu;
+    }
+
+    private Menu build_new_section (uint64 selection_size) {
+        if (selection_size > 0) {
+            return new Menu ();
+        }
+
+        var new_section = new Menu ();
+
+        new_section.append (_("New Folder"), MainWindow.ACTION_PREFIX + MainWindow.ACTION_NEW_FOLDER);
+
+        return new_section;
+    }
+
+    private Menu build_open_section (uint64 selection_size) {
+        if (selection_size != 1) {
+            return new Menu ();
+        }
+
+        var selection = selection_model.get_selection ();
+        var item = (FileBase) selection_model.get_item (selection.get_nth (0));
+
+        var open_section = new Menu ();
+
+        if (item is Document) {
+            open_section.append (
+                _("Open with <Insert default here>"),
+                Action.print_detailed_name (MainWindow.ACTION_PREFIX + MainWindow.ACTION_OPEN, OpenHint.NONE)
+            );
+            open_section.append (
+                _("Open with…"),
+                Action.print_detailed_name (MainWindow.ACTION_PREFIX + MainWindow.ACTION_OPEN, OpenHint.CHOOSE)
+            );
+        } else {
+            open_section.append (
+                _("Open"),
+                Action.print_detailed_name (MainWindow.ACTION_PREFIX + MainWindow.ACTION_OPEN, OpenHint.NONE)
+            );
+        }
+
+        return open_section;
+    }
+
+    private Menu build_edit_section (uint64 selection_size) {
+        var edit_section = new Menu ();
+
+        if (selection_size > 0) {
+            edit_section.append (_("Copy"), MainWindow.ACTION_PREFIX + MainWindow.ACTION_COPY);
+            edit_section.append (_("Cut"), MainWindow.ACTION_PREFIX + MainWindow.ACTION_CUT);
+            edit_section.append (_("Rename"), MainWindow.ACTION_PREFIX + MainWindow.ACTION_RENAME);
+        } else {
+            edit_section.append (_("Paste"), MainWindow.ACTION_PREFIX + MainWindow.ACTION_PASTE);
+        }
+
+        return edit_section;
     }
 }

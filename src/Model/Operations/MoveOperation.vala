@@ -13,6 +13,10 @@ public class Files.MoveOperation : ConflictableOperation {
         Object (infos: infos);
     }
 
+    public override string? calculate_resulting_uri (OperationInfo info) {
+        return File.new_for_uri (info.data).get_child (File.new_for_uri (info.source_uri).get_basename ()).get_uri ();
+    }
+
     protected override async void run_operation (OperationInfo info) throws Error {
         var source = File.new_for_uri (info.source_uri);
         var destination = File.new_for_uri (info.data).get_child (source.get_basename ());

@@ -1,0 +1,13 @@
+columnview > listview {
+    border-spacing: 8px;
+    padding: 6px;
+}
+
+columnview > listview > row {
+    border-radius: 6px;
+}
+
+gridview {
+    border-spacing: 8px;
+    padding: 6px;
+}

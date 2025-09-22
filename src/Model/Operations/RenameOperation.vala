@@ -18,6 +18,11 @@ public class Files.RenameOperation : Operation {
         Object (infos: infos);
     }
 
+    public override string? calculate_resulting_uri (OperationInfo info) {
+        // TODO: character conversion according to set display name
+        return File.new_for_uri (info.source_uri).get_parent ().get_child (info.data).get_uri ();
+    }
+
     protected override async void run_operation (OperationInfo info) throws Error {
         var source = File.new_for_uri (info.source_uri);
         var new_name = info.data;

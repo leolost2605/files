@@ -13,6 +13,7 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
     public const string ACTION_NEW_TAB = "new-tab";
     public const string ACTION_RENAME = "rename";
     public const string ACTION_OPEN = "open";
+    public const string ACTION_NEW_FOLDER = "new-folder";
 
     private const ActionEntry[] ACTION_ENTRIES = {
         {ACTION_COPY, on_copy },
@@ -22,6 +23,7 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
         {ACTION_NEW_TAB, on_new_tab, },
         {ACTION_RENAME, on_rename },
         {ACTION_OPEN, on_open, "i" },
+        {ACTION_NEW_FOLDER, on_new_folder },
     };
 
     public signal void location_changed (string new_location);
@@ -104,7 +106,7 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
     }
 
     private void on_paste () {
-        selected_view.paste.begin ();
+        selected_view.paste ();
     }
 
     private void on_trash () {
@@ -142,6 +144,10 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
 
     private void on_open (SimpleAction action, Variant? param) {
         selected_view.open ((OpenHint) param.get_int32 ());
+    }
+
+    private void on_new_folder (SimpleAction action, Variant? param) {
+        selected_view.create_new_folder ();
     }
 
     private void on_action_added (string action_name) {

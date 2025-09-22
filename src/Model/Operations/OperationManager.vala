@@ -29,39 +29,6 @@ public class Files.OperationManager : Object {
         undo_stack = new Gee.LinkedList<Operation> ();
     }
 
-    // Utility that checks whether to move or copy files and queues the according operation
-    public async void paste_files (owned string[] sources, string destination) {
-        string[] to_move = {};
-        string[] to_copy = {};
-
-        foreach (var source in sources) {
-            var base_file = yield FileBase.get_for_uri (source);
-
-            if (base_file.move_queued) {
-                to_move += base_file.uri;
-            } else {
-                to_copy += base_file.uri;
-            }
-        }
-
-        if (to_move.length > 0) {
-            push_operation (new MoveOperation (to_move, destination));
-        }
-
-        if (to_copy.length > 0) {
-            push_operation (new CopyOperation (to_copy, destination));
-        }
-    }
-
-    public void rename_files (string[] uris, string[] new_names) {
-        if (uris.length != new_names.length) {
-            warning ("Source URIs and new names must have the same length.");
-            return;
-        }
-
-        push_operation (new RenameOperation (uris, new_names));
-    }
-
     public void push_operation (Operation operation) {
         if (current_operations.n_items >= 5) {
             pending_operations.offer (operation);
