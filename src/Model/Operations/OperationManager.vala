@@ -14,6 +14,8 @@ public class Files.OperationManager : Object {
         return instance;
     }
 
+    public signal void error_occurred (ErrorInfo info);
+
     public ListStore current_operations { get; construct; }
     public int n_pending { get { return pending_operations.size; } }
 
@@ -72,6 +74,7 @@ public class Files.OperationManager : Object {
     private void start_operation (Operation operation) {
         current_operations.append (operation);
         operation.done.connect (on_operation_done);
+        operation.error_occurred.connect ((info) => error_occurred (info));
         operation.start ();
     }
 

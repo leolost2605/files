@@ -4,27 +4,16 @@
  */
 
 public class Files.TrashOperation : Operation {
-    public string[] source_uris { get; construct; }
-
     public TrashOperation (string[] source_uris) {
-        Object (source_uris: source_uris);
-    }
-
-    public override void start () {
-        trash.begin ();
-    }
-
-    private async void trash () {
-        foreach (var uri in source_uris) {
-            var source = File.new_for_uri (uri);
-
-            try {
-                yield source.trash_async (Priority.DEFAULT, cancellable);
-            } catch (Error e) {
-                report_error ("Failed to trash file %s: %s".printf (source.get_uri (), e.message));
-            }
+        var infos = new Gee.ArrayList<OperationInfo> ();
+        for (int i = 0; i < source_uris.length; i++) {
+            infos.add (new OperationInfo (source_uris[i], null));
         }
+        Object (infos: infos);
+    }
 
-        done ();
+    protected override async void run_operation (OperationInfo info) throws Error {
+        var source = File.new_for_uri (info.source_uri);
+        yield source.trash_async (Priority.DEFAULT, cancellable);
     }
 }

@@ -4,29 +4,18 @@
  */
 
 public class Files.MoveOperation : ConflictableOperation {
-    public string[] source_uris { get; construct; }
-    public string destination_uri { get; construct; }
-
     public MoveOperation (string[] source_uris, string destination_uri) {
-        Object (source_uris: source_uris, destination_uri: destination_uri);
-    }
-
-    public override void start () {
-        move.begin ();
-    }
-
-    private async void move () {
-        foreach (var uri in source_uris) {
-            var source = File.new_for_uri (uri);
-            var destination = File.new_build_filename (destination_uri, source.get_basename ());
-
-            try {
-                yield run_conflict_op (source, destination, MOVE);
-            } catch (Error e) {
-                report_error ("Failed to move file %s to %s: %s".printf (source.get_uri (), destination.get_uri (), e.message));
-            }
+        var infos = new Gee.ArrayList<OperationInfo> ();
+        for (int i = 0; i < source_uris.length; i++) {
+            infos.add (new OperationInfo (source_uris[i], destination_uri));
         }
 
-        done ();
+        Object (infos: infos);
+    }
+
+    protected override async void run_operation (OperationInfo info) throws Error {
+        var source = File.new_for_uri (info.source_uri);
+        var destination = File.new_build_filename (info.data, source.get_basename ());
+        yield run_conflict_op (source, destination, MOVE);
     }
 }

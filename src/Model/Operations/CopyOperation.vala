@@ -4,37 +4,22 @@
  */
 
 public class Files.CopyOperation : ConflictableOperation {
-    public string[] source_uris { get; construct; }
-    public string destination_uri { get; construct; }
-
     public CopyOperation (string[] source_uris, string destination_uri) {
-        Object (source_uris: source_uris, destination_uri: destination_uri);
-    }
-
-    public override void start () {
-        copy.begin ();
-    }
-
-    private async void copy () {
-        foreach (var uri in source_uris) {
-            var source = File.new_for_uri (uri);
-            FileInfo source_info;
-            try {
-                source_info = yield source.query_info_async ("standard::*", NONE, Priority.DEFAULT, cancellable);
-            } catch (Error e) {
-                report_error ("Failed to query info for file %s, skipping copy: %s".printf (uri, e.message));
-                continue;
-            }
-            var destination = File.new_build_filename (destination_uri, source.get_basename ());
-
-            try {
-                yield copy_recursive (source, source_info, destination);
-            } catch (Error e) {
-                report_error ("Failed to copy file %s to %s: %s".printf (uri, destination.get_uri (), e.message));
-            }
+        var infos = new Gee.ArrayList<OperationInfo> ();
+        for (int i = 0; i < source_uris.length; i++) {
+            infos.add (new OperationInfo (source_uris[i], destination_uri));
         }
 
-        done ();
+        Object (infos: infos);
+    }
+
+    protected override async void run_operation (OperationInfo info) throws Error {
+        var source = File.new_for_uri (info.source_uri);
+        var source_info = yield source.query_info_async ("standard::*", NONE, Priority.DEFAULT, cancellable);
+
+        var destination = File.new_build_filename (info.data, source.get_basename ());
+
+        yield copy_recursive (source, source_info, destination);
     }
 
     private async void copy_recursive (File source, FileInfo source_info, File destination) throws Error {

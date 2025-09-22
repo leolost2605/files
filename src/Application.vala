@@ -53,13 +53,15 @@ public class Files.Application : Gtk.Application {
 
         unowned Gtk.IconTheme default_theme = Gtk.IconTheme.get_for_display (Gdk.Display.get_default ());
         default_theme.add_resource_path ("io/github/leolost2605/files/");
+
+        OperationManager.get_instance ().error_occurred.connect (on_operation_error);
     }
 
     protected override void activate () {
         if (main_window != null) {
-			main_window.present ();
-			return;
-		}
+            main_window.present ();
+            return;
+        }
 
         var main_window = new MainWindow (this);
 
@@ -87,6 +89,21 @@ public class Files.Application : Gtk.Application {
         );
 
         main_window.present ();
+    }
+
+    private void on_operation_error (ErrorInfo info) {
+        var dialog = new Granite.MessageDialog (
+            "An error occurred",
+            "An error occurred while performing a file operation",
+            new ThemedIcon ("dialog-error")
+        ) {
+            transient_for = active_window,
+        };
+        dialog.show_error_details (info.message);
+        dialog.present ();
+
+        // TODO: Base on user input from dialog
+        info.response (SKIP);
     }
 
     public static int main (string[] args) {
