@@ -29,15 +29,6 @@ public class Files.FileModel : Object, ListModel {
         return store.get_n_items ();
     }
 
-    /**
-     * Add to uris and connect changed.
-     * To allow performance optimization (splice) we don't add it to the store here.
-     */
-    private void register_file (FileBase file) {
-        uris.add (file.uri);
-        file.changed.connect (on_changed);
-    }
-
     public async void append (string uri) {
         if (uri in uris) {
             return;
@@ -50,7 +41,7 @@ public class Files.FileModel : Object, ListModel {
             return;
         }
 
-        register_file (file);
+        uris.add (file.uri);
         store.append (file);
     }
 
@@ -67,7 +58,6 @@ public class Files.FileModel : Object, ListModel {
 
         store.remove (position);
         uris.remove (uri);
-        file.changed.disconnect (on_changed);
     }
 
     // We only do append multiple with infos otherwise there's no gain in
@@ -83,7 +73,7 @@ public class Files.FileModel : Object, ListModel {
                 continue;
             }
 
-            register_file (file);
+            uris.add (file.uri);
             additions[index] = file;
             index++;
         }
@@ -91,20 +81,25 @@ public class Files.FileModel : Object, ListModel {
         store.splice (store.n_items, 0, additions);
     }
 
+    public async void rename (string old_uri, string new_uri) {
+        if (!(old_uri in uris)) {
+            return;
+        }
+
+        uris.remove (old_uri);
+        uris.add (new_uri);
+
+        var old_file = yield FileBase.get_for_uri (old_uri);
+        var new_file = yield FileBase.get_for_uri (new_uri);
+
+        uint position;
+        store.find (old_file, out position);
+
+        store.splice (position, 1, { new_file });
+    }
+
     public void remove_all () {
         store.remove_all ();
         uris.clear ();
-    }
-
-    private void on_changed (FileBase file, File? old_file) {
-        if (file.uri != old_file.get_uri ()) {
-            uris.remove (old_file.get_uri ());
-            uris.add (file.uri);
-        }
-
-        uint pos;
-        if (store.find (file, out pos)) {
-            items_changed (pos, 1, 1);
-        }
     }
 }

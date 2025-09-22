@@ -9,7 +9,7 @@
  * This is the only way to obtain files. It automatically constructs the correct file
  * (directory or document).
  *
- * A FileBase file is backed by a {@link GLib.File}. This file can change (e.g. when it's renamed).
+ * A FileBase file is backed by a {@link GLib.File} that will not change during its lifetime.
  * Some properties are always valid (like of course the file, uri and also basename) while some
  * are only valid after the file has been loaded with {@link load}.
  */
@@ -69,35 +69,15 @@ public abstract class Files.FileBase : Object {
         }
     }
 
-    public signal void changed (File? old_file);
-
     public Cancellable cancellable { get; construct; }
 
-    private File? _file;
     /**
-     * The backing file of #this. It is strongly discouraged to use it directly since
-     * it can change during the lifetime of #this.
-     * It is only provided for occassions where it's really needed, e.g. when communicating
+     * The backing file of #this. It is discouraged to use this directly.
+     * It is only provided for occasions where it's really needed, e.g. when communicating
      * with third parties (dnd, c&p) or doing operations. Instead you should use the properties of #this
-     * like {@link basename}, {@link uri}, {@link size}, etc.
+     * like {@link display_name}, {@link uri}, {@link size}, etc.
      */
-    public File file {
-        get { return _file; }
-        protected construct set {
-            if (_file != null) {
-                known_files.remove (uri);
-            }
-
-            var old_file = _file;
-            _file = value;
-
-            uri = _file.get_uri ();
-
-            known_files[uri] = this;
-
-            changed (old_file);
-        }
-    }
+    public File file { get; construct; }
 
     private FileInfo? _info;
     public FileInfo info {
@@ -134,6 +114,10 @@ public abstract class Files.FileBase : Object {
     protected FileBase () {}
 
     construct {
+        uri = _file.get_uri ();
+
+        known_files[uri] = this;
+
         cancellable = new Cancellable ();
     }
 
@@ -217,18 +201,5 @@ public abstract class Files.FileBase : Object {
         }
 
         refreshing = false;
-    }
-
-    /**
-     * This doesn't actually rename the file on disk. For that use
-     * {@link OperationManager.rename_files}
-     */
-    public void rename (File new_file) {
-        if (uri == new_file.get_uri ()) {
-            return;
-        }
-
-        file = new_file;
-        refresh.begin ();
     }
 }

@@ -52,8 +52,7 @@ public class Files.Directory : FileBase {
 
             case MOVED:
                 if (other_file != null && other_file.get_parent ().equal (file.get_parent ())) {
-                    var base_file = yield FileBase.get_for_uri (file.get_uri ());
-                    base_file.rename (other_file);
+                    children.rename.begin (file.get_uri (), other_file.get_uri ());
                 } else {
                     children.remove.begin (file.get_uri ());
                 }
