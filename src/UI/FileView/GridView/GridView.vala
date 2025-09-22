@@ -16,7 +16,9 @@ public class Files.GridView : Granite.Bin {
         factory.bind.connect (CellBase.bind_func);
         factory.unbind.connect (CellBase.unbind_func);
 
-        var grid_view = new Gtk.GridView (selection_model, factory);
+        var grid_view = new Gtk.GridView (selection_model, factory) {
+            enable_rubberband = true,
+        };
 
         var scrolled_window = new Gtk.ScrolledWindow () {
             child = grid_view
