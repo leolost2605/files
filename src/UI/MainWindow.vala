@@ -24,6 +24,8 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
         {ACTION_OPEN, on_open, "i" },
     };
 
+    public signal void location_changed (string new_location);
+
     public FileView selected_view {
         get { return (FileView) tab_view.selected_page.child; }
     }
@@ -68,7 +70,7 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
         toolbar_view.add_top_bar (tab_bar);
 
         var split_view = new Adw.NavigationSplitView () {
-            sidebar = new Adw.NavigationPage (new SideBar (), _("Sidebar")),
+            sidebar = new Adw.NavigationPage (new Sidebar (), _("Sidebar")),
             content = new Adw.NavigationPage (toolbar_view, _("Files"))
         };
 
@@ -78,6 +80,11 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
 
         titlebar = null_title;
         child = split_view;
+
+        action_added.connect (on_action_added);
+        action_state_changed.connect (on_action_state_changed);
+
+        on_new_tab ();
     }
 
     private void on_selected_tab_changed () {
@@ -135,5 +142,17 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
 
     private void on_open (SimpleAction action, Variant? param) {
         selected_view.open ((OpenHint) param.get_int32 ());
+    }
+
+    private void on_action_added (string action_name) {
+        if (action_name == FileViewState.ACTION_LOCATION) {
+            on_action_state_changed (action_name, get_action_state (action_name));
+        }
+    }
+
+    private void on_action_state_changed (string action, Variant new_state) {
+        if (action == FileViewState.ACTION_LOCATION) {
+            location_changed (new_state.get_string ());
+        }
     }
 }
