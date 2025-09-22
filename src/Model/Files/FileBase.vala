@@ -105,7 +105,7 @@ public abstract class Files.FileBase : Object {
         protected construct set {
             _info = value;
             display_name = _info.get_display_name ();
-            hidden = _info.get_is_hidden ();
+            hidden = _info.has_attribute ("standard::is-hidden") ? _info.get_is_hidden () : false;
             icon = _info.get_icon () ?? new ThemedIcon ("text-x-generic");
         }
     }
