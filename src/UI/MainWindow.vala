@@ -125,7 +125,7 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
     private void add_new_tab (string? uri) {
         var state = new FileViewState ();
         var file_view = new FileView (state);
-        var page = tab_view.append (file_view);
+        var page = tab_view.add_page (file_view, tab_view.selected_page);
 
         state.bind_property ("directory", page, "title", SYNC_CREATE, (binding, from, ref to) => {
             var directory = (Directory) from.get_object ();
