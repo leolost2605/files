@@ -12,123 +12,51 @@ public enum Files.OpenHint {
 
 public enum Files.CellType {
     NAME,
-    SIZE,
+    SIZE
 }
 
 public enum Files.ViewType {
     LIST,
-    GRID;
-
-    public string to_string () {
-        switch (this) {
-            case LIST:
-                return "list";
-
-            case GRID:
-                return "grid";
-
-            default:
-                warning ("Unknown view type: %d", (int) this);
-                return "list";
-        }
-    }
-
-    public static ViewType from_string (string str) {
-        switch (str) {
-            case "list":
-                return LIST;
-
-            case "grid":
-                return GRID;
-        }
-
-        warning ("Unknown view type: %s", str);
-        return LIST;
-    }
+    GRID
 }
 
 public class Files.FileView : Granite.Bin {
-    private Directory? _directory;
-    public Directory? directory {
-        get { return _directory; }
-        set {
-            if (_directory == value) {
-                return;
-            }
+    public FileViewState state { get; construct; }
 
-            if (_directory != null) {
-                _directory.queue_unload ();
-            }
-
-            _directory = value;
-
-            if (history.size - 1 > current_index && history.get (current_index + 1) != value) {
-                for (int i = current_index + 1; i < history.size; i++) {
-                    history.remove_at (i);
-                }
-            }
-
-            if (value != null) {
-                filter_model.model = value.children;
-                value.load ();
-
-                if (current_index > 0 && value == history.get (current_index - 1)) {
-                    current_index--;
-                } else if (history.size - 1 > current_index && value == history.get (current_index + 1)) {
-                    current_index++;
-                } else {
-                    history.add (value);
-                    current_index++;
-                }
-            } else {
-                //todo show placeholder
-            }
-
-            sync_history_actions ();
-        }
-    }
-
-    public ViewType view_type {
-        get { return ViewType.from_string (stack.visible_child_name); }
-        set { stack.visible_child_name = value.to_string (); }
-    }
-
-    private Gee.ArrayList<Directory> history;
-    private int current_index = -1;
-
-    private Gtk.FilterListModel filter_model;
     private Gtk.MultiSelection selection_model;
-
-    private ListView list_view;
-
-    private Gtk.Stack stack;
 
     private Gtk.PopoverMenu context_menu;
 
-    construct {
-        history = new Gee.ArrayList<Directory> ();
+    public FileView (FileViewState state) {
+        Object (state: state);
+    }
 
-        filter_model = new Gtk.FilterListModel (null, null);
+    construct {
+        var filter_model = new Gtk.FilterListModel (null, null);
+        state.bind_property ("directory", filter_model, "model", SYNC_CREATE, (binding, from_val, ref to_val) => {
+            var dir = (Directory) from_val.get_object ();
+            to_val.set_object (dir?.children);
+            return true;
+        });
+
         var sort_model = new Gtk.SortListModel (filter_model, null);
         selection_model = new Gtk.MultiSelection (sort_model);
 
         // The ListView is our "master" view for sorting since it handles it via the column view
         Gtk.Sorter sorter;
-        list_view = new ListView (selection_model, out sorter);
+        var list_view = new ListView (state, selection_model, out sorter);
         sort_model.sorter = sorter;
 
         var grid_view = new GridView (selection_model);
 
-        stack = new Gtk.Stack ();
+        var stack = new Gtk.Stack ();
         stack.add_named (list_view, ViewType.LIST.to_string ());
         stack.add_named (grid_view, ViewType.GRID.to_string ());
+        state.bind_property ("view-type", stack, "visible-child-name", SYNC_CREATE);
 
         hexpand = true;
         vexpand = true;
         child = stack;
-
-        map.connect (on_map);
-        unmap.connect (on_unmap);
 
         settings.bind_with_mapping ("show-hidden-files", filter_model, "filter", GET, (val, variant, user_data) => {
             if ((bool) variant) {
@@ -173,56 +101,6 @@ public class Files.FileView : Granite.Bin {
         long_press.pressed.connect (on_secondary_click);
     }
 
-    private void on_map () {
-        /* We have to activate the actions after we are mapped because mapping means we are now the visible tab.
-         * So we have to make sure that the header bar is up to date with our values
-         */
-        if (directory != null) {
-            activate_action_variant (MainWindow.ACTION_PREFIX + MainWindow.ACTION_GOTO, directory.uri);
-        }
-
-        var action_group = (ActionGroup) get_ancestor (typeof (ActionGroup));
-
-        if (action_group != null) {
-            action_group.change_action_state (MainWindow.ACTION_VIEW_TYPE, (int) view_type);
-        }
-
-        list_view.start_listen ();
-        sync_history_actions ();
-    }
-
-    private void on_unmap () {
-        list_view.end_listen ();
-    }
-
-    private void sync_history_actions () {
-        var main_window = (MainWindow) get_ancestor (typeof (MainWindow));
-
-        if (main_window != null) {
-            var back = (SimpleAction) main_window.lookup_action (MainWindow.ACTION_BACK);
-            var forward = (SimpleAction) main_window.lookup_action (MainWindow.ACTION_FORWARD);
-
-            back.set_enabled (current_index > 0);
-            forward.set_enabled (current_index < history.size - 1);
-        }
-    }
-
-    public void back () {
-        if (current_index == 0) {
-            return;
-        }
-
-        activate_action_variant (MainWindow.ACTION_PREFIX + MainWindow.ACTION_GOTO, history.get (current_index - 1).uri);
-    }
-
-    public void forward () {
-        if (current_index == history.size - 1) {
-            return;
-        }
-
-        activate_action_variant (MainWindow.ACTION_PREFIX + MainWindow.ACTION_GOTO, history.get (current_index + 1).uri);
-    }
-
     public void copy (bool move) {
         var selection = selection_model.get_selection ();
 
@@ -263,7 +141,7 @@ public class Files.FileView : Granite.Bin {
         }
 
         unowned var manager = OperationManager.get_instance ();
-        manager.paste_files.begin (uris, directory.uri);
+        manager.paste_files.begin (uris, state.directory.uri);
     }
 
     public void trash () {
@@ -298,7 +176,7 @@ public class Files.FileView : Granite.Bin {
             var dir = file.open ((Gtk.Window) get_root (), hint == CHOOSE);
 
             if (dir != null) {
-                activate_action_variant (MainWindow.ACTION_PREFIX + MainWindow.ACTION_GOTO, dir.uri);
+                state.directory = dir;
             }
         }
     }

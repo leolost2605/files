@@ -10,14 +10,8 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
     public const string ACTION_CUT = "cut";
     public const string ACTION_PASTE = "paste";
     public const string ACTION_TRASH = "trash";
-    public const string ACTION_GOTO = "goto";
-    public const string ACTION_BACK = "back";
-    public const string ACTION_FORWARD = "forward";
     public const string ACTION_NEW_TAB = "new-tab";
-    public const string ACTION_VIEW_TYPE = "view-type";
     public const string ACTION_RENAME = "rename";
-    public const string ACTION_SORT_KEY = "sort-key";
-    public const string ACTION_SORT_DIRECTION = "sort-direction";
     public const string ACTION_OPEN = "open";
 
     private const ActionEntry[] ACTION_ENTRIES = {
@@ -25,23 +19,10 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
         {ACTION_CUT, on_cut },
         {ACTION_PASTE, on_paste },
         {ACTION_TRASH, on_trash },
-        {ACTION_GOTO, on_goto, "s" },
-        {ACTION_BACK, on_back, },
-        {ACTION_FORWARD, on_forward, },
         {ACTION_NEW_TAB, on_new_tab, },
-        {ACTION_VIEW_TYPE, null, "i" , "0", on_view_type_changed },
         {ACTION_RENAME, on_rename },
-        {ACTION_SORT_KEY, null, "i" , "0", on_sort_key_changed },
-        {ACTION_SORT_DIRECTION, null, "i" , "0", on_sort_direction_changed },
         {ACTION_OPEN, on_open, "i" },
     };
-
-    public Directory? directory {
-        set {
-            selected_view.directory = value;
-            end_header.directory = value;
-        }
-    }
 
     public FileView selected_view {
         get { return (FileView) tab_view.selected_page.child; }
@@ -74,6 +55,7 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
         end_header = new HeaderBar ();
 
         tab_view = new Adw.TabView ();
+        tab_view.notify["selected-page"].connect (on_selected_tab_changed);
 
         var tab_bar = new Adw.TabBar () {
             view = tab_view
@@ -100,8 +82,14 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
 
         titlebar = null_title;
         child = paned;
+    }
 
-        on_new_tab ();
+    private void on_selected_tab_changed () {
+        var file_view = (FileView) tab_view.selected_page.child;
+
+        foreach (var action in file_view.state.actions) {
+            add_action (action);
+        }
     }
 
     private void on_copy () {
@@ -120,39 +108,12 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
         selected_view.trash ();
     }
 
-    private void on_goto (SimpleAction action, Variant? uri) {
-        goto.begin ((string) uri);
-    }
-
-    private async void goto (string uri) {
-        var file = yield FileBase.get_for_uri ((string) uri);
-
-        if (file == null) {
-            directory = null;
-            return;
-        }
-
-        if (file is Directory) {
-            directory = (Directory) file;
-        } else {
-            directory = yield file.get_parent ();
-            //todo select file
-        }
-    }
-
-    private void on_back () {
-        selected_view.back ();
-    }
-
-    private void on_forward () {
-        selected_view.forward ();
-    }
-
     private void on_new_tab () {
-        var file_view = new FileView ();
+        var state = new FileViewState ();
+        var file_view = new FileView (state);
         var page = tab_view.append (file_view);
 
-        file_view.bind_property ("directory", page, "title", SYNC_CREATE, (binding, from, ref to) => {
+        state.bind_property ("directory", page, "title", SYNC_CREATE, (binding, from, ref to) => {
             var directory = (Directory) from.get_object ();
             if (directory != null) {
                 to.set_string (directory.basename);
@@ -166,27 +127,14 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
 
         try {
             var home_uri = Filename.to_uri (Environment.get_home_dir (), null);
-            activate_action_variant (MainWindow.ACTION_PREFIX + MainWindow.ACTION_GOTO, home_uri);
+            activate_action_variant (MainWindow.ACTION_PREFIX + FileViewState.ACTION_LOCATION, home_uri);
         } catch (Error e) {
             warning ("Error converting path to URI: %s", e.message);
         }
     }
 
-    private void on_view_type_changed (SimpleAction action, Variant view_type) {
-        selected_view.view_type = (ViewType) view_type.get_int32 ();
-        action.set_state (view_type);
-    }
-
     private void on_rename () {
         selected_view.rename ();
-    }
-
-    private void on_sort_key_changed (SimpleAction action, Variant sort_key) {
-        action.set_state (sort_key);
-    }
-
-    private void on_sort_direction_changed (SimpleAction action, Variant sort_direction) {
-        action.set_state (sort_direction);
     }
 
     private void on_open (SimpleAction action, Variant? param) {
