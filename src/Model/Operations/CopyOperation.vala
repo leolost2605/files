@@ -17,7 +17,7 @@ public class Files.CopyOperation : ConflictableOperation {
         var source = File.new_for_uri (info.source_uri);
         var source_info = yield source.query_info_async ("standard::*", NONE, Priority.DEFAULT, cancellable);
 
-        var destination = File.new_build_filename (info.data, source.get_basename ());
+        var destination = File.new_for_uri (info.data).get_child (source.get_basename ());
 
         yield copy_recursive (source, source_info, destination);
     }

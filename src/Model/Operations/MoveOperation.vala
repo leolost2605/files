@@ -15,7 +15,7 @@ public class Files.MoveOperation : ConflictableOperation {
 
     protected override async void run_operation (OperationInfo info) throws Error {
         var source = File.new_for_uri (info.source_uri);
-        var destination = File.new_build_filename (info.data, source.get_basename ());
+        var destination = File.new_for_uri (info.data).get_child (source.get_basename ());
         yield run_conflict_op (source, destination, MOVE);
     }
 }
