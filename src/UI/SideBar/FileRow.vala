@@ -19,7 +19,7 @@ public class Files.FileRow : Gtk.ListBoxRow {
         var label = new Gtk.Label (null) {
             xalign = 0
         };
-        file.bind_property ("basename", label, "label", SYNC_CREATE);
+        file.bind_property ("display-name", label, "label", SYNC_CREATE);
 
         var box = new Granite.Box (HORIZONTAL);
         box.append (icon);

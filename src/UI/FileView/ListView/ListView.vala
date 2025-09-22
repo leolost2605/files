@@ -25,7 +25,7 @@ public class Files.ListView : Granite.Bin {
         name_factory.bind.connect (CellBase.bind_func);
         name_factory.unbind.connect (CellBase.unbind_func);
 
-        var name_sorter = new Gtk.StringSorter (new Gtk.PropertyExpression (typeof (FileBase), null, "basename")) {
+        var name_sorter = new Gtk.StringSorter (new Gtk.PropertyExpression (typeof (FileBase), null, "display-name")) {
             ignore_case = true,
         };
 

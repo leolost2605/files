@@ -17,7 +17,7 @@ public class Files.RenameDialog : Gtk.Window {
         header_bar.add_css_class (Granite.STYLE_CLASS_FLAT);
 
         new_name_entry = new Gtk.Entry () {
-            text = file.basename,
+            text = file.display_name,
             activates_default = true,
         };
 

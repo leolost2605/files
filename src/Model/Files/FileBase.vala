@@ -92,7 +92,6 @@ public abstract class Files.FileBase : Object {
             _file = value;
 
             uri = _file.get_uri ();
-            basename = _file.get_basename ();
 
             known_files[uri] = this;
 
@@ -105,6 +104,7 @@ public abstract class Files.FileBase : Object {
         protected get { return _info; }
         protected construct set {
             _info = value;
+            display_name = _info.get_display_name ();
             hidden = _info.get_is_hidden ();
             icon = _info.get_icon () ?? new ThemedIcon ("text-x-generic");
         }
@@ -112,7 +112,7 @@ public abstract class Files.FileBase : Object {
 
     // Properties of the file that are always valid. Note they may change during the lifetime of #this
     public string uri { get; private set; }
-    public string basename { get; private set; }
+    public string display_name { get; private set; }
     public bool hidden { get; private set; }
     public Icon icon { get; private set; }
 

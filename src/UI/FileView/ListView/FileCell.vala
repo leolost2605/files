@@ -45,7 +45,7 @@ public class Files.FileCell : CellBase {
         switch (cell_type) {
             case CellType.NAME:
                 icon_binding = file.bind_property ("icon", icon, "gicon", SYNC_CREATE);
-                label_binding = file.bind_property ("basename", label, "label", SYNC_CREATE);
+                label_binding = file.bind_property ("display-name", label, "label", SYNC_CREATE);
                 break;
             case CellType.SIZE:
                 label_binding = file.bind_property ("display-size", label, "label", SYNC_CREATE);

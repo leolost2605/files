@@ -30,7 +30,7 @@ public class Files.GridCell : CellBase {
 
     public override void bind (FileBase file) {
         icon_binding = file.bind_property ("icon", icon, "gicon", SYNC_CREATE);
-        label_binding = file.bind_property ("basename", label, "label", SYNC_CREATE);
+        label_binding = file.bind_property ("display-name", label, "label", SYNC_CREATE);
     }
 
     public override void unbind () {

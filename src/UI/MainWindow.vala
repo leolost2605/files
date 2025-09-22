@@ -119,7 +119,7 @@ public class Files.MainWindow : Gtk.ApplicationWindow {
         state.bind_property ("directory", page, "title", SYNC_CREATE, (binding, from, ref to) => {
             var directory = (Directory) from.get_object ();
             if (directory != null) {
-                to.set_string (directory.basename);
+                to.set_string (directory.display_name);
             } else {
                 to.set_string ("n/a");
             }
