@@ -97,7 +97,7 @@ public class Files.ListView : Granite.Bin {
 
     private void update_sorting () {
         if (sorter.primary_sort_order == state.sort_direction &&
-            sorter.primary_sort_column.id == state.sort_key.to_string ()
+            sorter.primary_sort_column?.id == state.sort_key.to_string ()
         ) {
             return;
         }
