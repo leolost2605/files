@@ -17,8 +17,6 @@ public class Files.Directory : FileBase {
 
         bind_property ("size", this, "display-size", SYNC_CREATE);
         children.bind_property ("n-items", this, "size");
-
-        icon = new ThemedIcon ("folder");
     }
 
     protected override async void load_internal () {

@@ -106,6 +106,7 @@ public abstract class Files.FileBase : Object {
         protected construct set {
             _info = value;
             hidden = _info.get_is_hidden ();
+            icon = _info.get_icon () ?? new ThemedIcon ("text-x-generic");
         }
     }
 
@@ -113,6 +114,7 @@ public abstract class Files.FileBase : Object {
     public string uri { get; private set; }
     public string basename { get; private set; }
     public bool hidden { get; private set; }
+    public Icon icon { get; private set; }
 
     // Properties of the file that are only valid after it has been loaded
 
@@ -121,7 +123,6 @@ public abstract class Files.FileBase : Object {
      */
     public string display_size { get; protected set; }
     public int64 size { get; protected set; default = 0; }
-    public Icon icon { get; protected set; default = new ThemedIcon ("text-x-preview"); }
 
     // Misc stuff
     public bool move_queued { get; set; default = false; }
